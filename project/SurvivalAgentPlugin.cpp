@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SurvivalAgentPlugin.h"
 #include "IExamInterface.h"
+#include "ItemManager.h"
 
 using namespace std;
 
@@ -13,9 +14,13 @@ void SurvivalAgentPlugin::Initialize(IBaseInterface* pInterface, PluginInfo& inf
 
 	//Information for the leaderboards!
 	info.BotName = "MinionExam";
-	info.Student_Name = "JOHN CENA"; //No special characters allowed. Highscores won't work with special characters.
-	info.Student_Class = "2DAE00";
-	info.LB_Password = "TheChampIsHere123!";//Don't use a real password! This is only to prevent other students from overwriting your highscore!
+	info.Student_Name = "Revekka"; //No special characters allowed. Highscores won't work with special characters.
+	info.Student_Class = "2DAE09";
+	info.LB_Password = "Revekka!";//Don't use a real password! This is only to prevent other students from overwriting your highscore!
+
+	//----------------------------
+	m_pItemManager = new ItemManager(m_pInterface);
+
 }
 
 //Called only once
@@ -28,6 +33,7 @@ void SurvivalAgentPlugin::DllInit()
 void SurvivalAgentPlugin::DllShutdown()
 {
 	//Called when the plugin gets unloaded
+	delete m_pItemManager;
 }
 
 //Called only once, during initialization. Only works in DEBUG Mode
@@ -173,7 +179,7 @@ SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 		{
 			//Once grabbed, you can add it to a specific inventory slot
 			//Slot must be empty
-			m_pInterface->Inventory_AddItem(m_InventorySlot, item);
+		//	m_pItemManager->AddItem( item);
 		}
 	}
 

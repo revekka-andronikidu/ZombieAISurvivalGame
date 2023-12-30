@@ -3,9 +3,11 @@
   <ItemGroup>
     <ClCompile Include="SurvivalAgentPlugin.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="ItemManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SurvivalAgentPlugin.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ItemManager.h" />
   </ItemGroup>
 </Project>
