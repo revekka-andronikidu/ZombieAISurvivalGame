@@ -1,10 +1,13 @@
 #pragma once
 #include "IExamPlugin.h"
 #include "Exam_HelperStructs.h"
+#include "EBlackboard.h"
+#include "BehaviourTree/EBehaviorTree.h"
 
 class IBaseInterface;
 class IExamInterface;
 class ItemManager;
+
 
 class SurvivalAgentPlugin :public IExamPlugin
 {
@@ -36,8 +39,36 @@ private:
 
 	UINT m_InventorySlot = 0;
 
-	//my variables
+	//MY VARIABLES
 	ItemManager* m_pItemManager {nullptr};
+	Elite::Blackboard* m_pBlackboard{nullptr};
+
+	//Items found == create exlorer for this
+	/*std::vector<ItemInfo*> m_pPistolsLoot;
+	std::vector<ItemInfo*> m_pShotGunsLoot;
+	std::vector<ItemInfo*> m_pMedKitsLoot;
+	std::vector<ItemInfo*> m_pFoodLoot;
+
+	std::vector<HouseInfo*> m_pHousesMemory;*/
+
+	SteeringPlugin_Output* m_pSteeringOutput;
+	
+
+	std::vector<EnemyInfo> m_EnemiesInFov;
+	std::vector<PurgeZoneInfo> m_PurgeZonesInFov;
+	std::vector<HouseInfo> m_HousesInFov;
+
+	Elite::BehaviorTree* m_pBehaviorTree;
+
+	//MY FUNCTIONS
+	//initialization
+	void InitializeBlackboard();
+	void InitializeBT();
+
+	//
+	void GetEntitiesInFov();
+	void UseResourcesIfNeeded();
+	
 };
 
 //ENTRY

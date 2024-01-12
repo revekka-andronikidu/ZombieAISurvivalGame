@@ -2,6 +2,7 @@
 #include "SurvivalAgentPlugin.h"
 #include "IExamInterface.h"
 #include "ItemManager.h"
+#include "BehaviourTree/Behaviours.h"
 
 using namespace std;
 
@@ -20,7 +21,14 @@ void SurvivalAgentPlugin::Initialize(IBaseInterface* pInterface, PluginInfo& inf
 
 	//----------------------------
 	m_pItemManager = new ItemManager(m_pInterface);
+	m_pBlackboard = new Elite::Blackboard();
+	m_pSteeringOutput = new SteeringPlugin_Output{};
 
+	
+	InitializeBlackboard();
+
+	//create behaviour tree
+	InitializeBT();
 }
 
 //Called only once
@@ -34,6 +42,43 @@ void SurvivalAgentPlugin::DllShutdown()
 {
 	//Called when the plugin gets unloaded
 	delete m_pItemManager;
+	delete m_pBehaviorTree;
+	delete m_pSteeringOutput;
+
+
+	//delete m_pBlackboard; //deleted by behaviour tree
+	
+	
+
+	//delete 
+	/*for (auto pistol : m_pPistolsLoot)
+	{
+		delete pistol;
+		pistol = nullptr;
+	}
+	m_pPistolsLoot.clear();
+
+	for (auto shotGun : m_pShotGunsLoot)
+	{
+		delete shotGun;
+		shotGun = nullptr;
+	}
+	for (auto medKit : m_pMedKitsLoot)
+	{
+		delete medKit;
+		medKit = nullptr;
+	}
+	for (auto food : m_pFoodLoot)
+	{
+		delete food;
+		food = nullptr;
+	}
+	for (auto house : m_pHousesMemory)
+	{
+		delete house;
+		house = nullptr;
+	}*/
+	
 }
 
 //Called only once, during initialization. Only works in DEBUG Mode
@@ -43,7 +88,7 @@ void SurvivalAgentPlugin::InitGameDebugParams(GameDebugParams& params)
 	params.RenderUI = true; //Render the IMGUI Panel? (Default = true)
 	params.SpawnEnemies = true; //Do you want to spawn enemies? (Default = true)
 	params.EnemyCount = 20; //How many enemies? (Default = 20)
-	params.GodMode = false; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
+	params.GodMode = true; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
 	params.AutoGrabClosestItem = true; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
 	params.StartingDifficultyStage = 1;
@@ -126,29 +171,48 @@ void SurvivalAgentPlugin::Update_Debug(float dt)
 //This function calculates the new SteeringOutput, called once per frame
 SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 {
-	auto steering = SteeringPlugin_Output();
+
+	GetEntitiesInFov();
+	UseResourcesIfNeeded(); //use food or med kit if needs too
+	
+	
+	m_pBlackboard->ChangeData("Interface", m_pInterface); //update interface
+
+	//update decisions and select highrst priority task
+	m_pBehaviorTree->Update(dt);
+
+	//update steering
+	SteeringPlugin_Output* steering;
+	m_pBlackboard->GetData("Steering", steering);
+
+
+
+	
+
+
+
 
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
-	auto agentInfo = m_pInterface->Agent_GetInfo();
+	
 
 
 	//Use the navmesh to calculate the next navmesh point
 	//auto nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(checkpointLocation);
 
 	//OR, Use the mouse target
-	auto nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(m_Target);
+	//auto nextTargetPos = m_pInterface->NavMesh_GetClosestPathPoint(m_Target);
 
 	//FOV USAGE DEMO
 	//===============
 
 	//FOV stats = CHEAP! info about the FOV
-	FOVStats stats = m_pInterface->FOV_GetStats();
+	//FOVStats stats = m_pInterface->FOV_GetStats();
 
-	//FOV data (snapshot of the FOV of the current frame) = EXPENSIVE! returns a new vector for every call
-	auto vHousesInFOV = m_pInterface->GetHousesInFOV();
-	auto vEnemiesInFOV = m_pInterface->GetEnemiesInFOV();
-	auto vItemsInFOV = m_pInterface->GetItemsInFOV();
-	auto vPurgezonesInFOV = m_pInterface->GetPurgeZonesInFOV();
+	////FOV data (snapshot of the FOV of the current frame) = EXPENSIVE! returns a new vector for every call
+	//auto vHousesInFOV = m_pInterface->GetHousesInFOV();
+	//auto vEnemiesInFOV = m_pInterface->GetEnemiesInFOV();
+	//auto vItemsInFOV = m_pInterface->GetItemsInFOV();
+	//auto vPurgezonesInFOV = m_pInterface->GetPurgeZonesInFOV();
 
 	//for (auto& zoneInfo : vPurgezonesInFOV)
 	//{
@@ -168,66 +232,66 @@ SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 	//INVENTORY USAGE DEMO
 	//********************
 
-	if (m_GrabItem)
-	{
-		ItemInfo item;
-		//Item_Grab > When DebugParams.AutoGrabClosestItem is TRUE, the Item_Grab function returns the closest item in range
-		//Keep in mind that DebugParams are only used for debugging purposes, by default this flag is FALSE
-		//Otherwise, use GetEntitiesInFOV() to retrieve a vector of all entities in the FOV (EntityInfo)
-		//Item_Grab gives you the ItemInfo back, based on the passed EntityHash (retrieved by GetEntitiesInFOV)
-		if (m_pInterface->GrabNearestItem(item))
-		{
-			//Once grabbed, you can add it to a specific inventory slot
-			//Slot must be empty
-		//	m_pItemManager->AddItem( item);
-		}
-	}
+	//if (m_GrabItem)
+	//{
+	//	ItemInfo item;
+	//	//Item_Grab > When DebugParams.AutoGrabClosestItem is TRUE, the Item_Grab function returns the closest item in range
+	//	//Keep in mind that DebugParams are only used for debugging purposes, by default this flag is FALSE
+	//	//Otherwise, use GetEntitiesInFOV() to retrieve a vector of all entities in the FOV (EntityInfo)
+	//	//Item_Grab gives you the ItemInfo back, based on the passed EntityHash (retrieved by GetEntitiesInFOV)
+	//	if (m_pInterface->GrabNearestItem(item))
+	//	{
+	//		//Once grabbed, you can add it to a specific inventory slot
+	//		//Slot must be empty
+	//		m_pItemManager->AddItem( item);
+	//	}
+	//}
 
-	if (m_UseItem)
-	{
-		//Use an item (make sure there is an item at the given inventory slot)
-		m_pInterface->Inventory_UseItem(m_InventorySlot);
-	}
+	//if (m_UseItem)
+	//{
+	//	//Use an item (make sure there is an item at the given inventory slot)
+	//	m_pInterface->Inventory_UseItem(m_InventorySlot);
+	//}
 
-	if (m_RemoveItem)
-	{
-		//Remove an item from a inventory slot
-		m_pInterface->Inventory_RemoveItem(m_InventorySlot);
-	}
+	//if (m_RemoveItem)
+	//{
+	//	//Remove an item from a inventory slot
+	//	m_pInterface->Inventory_RemoveItem(m_InventorySlot);
+	//}
 
-	if (m_DestroyItemsInFOV)
-	{
-		for (auto& item : vItemsInFOV)
-		{
-			m_pInterface->DestroyItem(item);
-		}
-	}
+	//if (m_DestroyItemsInFOV)
+	//{
+	//	for (auto& item : vItemsInFOV)
+	//	{
+	//		m_pInterface->DestroyItem(item);
+	//	}
+	//}
 
 	//Simple Seek Behaviour (towards Target)
-	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
-	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
-	steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
+	//steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
+	//steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
+	//steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
 
-	if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
-	{
-		steering.LinearVelocity = Elite::ZeroVector2;
-	}
+	//if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
+	//{
+	//	steering.LinearVelocity = Elite::ZeroVector2;
+	//}
 
 	//steering.AngularVelocity = m_AngSpeed; //Rotate your character to inspect the world while walking
 
-	steering.AutoOrient = true; //Setting AutoOrient to true overrides the AngularVelocity
-	steering.RunMode = m_CanRun; //If RunMode is True > MaxLinearSpeed is increased for a limited time (until your stamina runs out)
+	////steering.AutoOrient = true; //Setting AutoOrient to true overrides the AngularVelocity
+	//steering.RunMode = m_CanRun; //If RunMode is True > MaxLinearSpeed is increased for a limited time (until your stamina runs out)
 
 	//SteeringPlugin_Output is works the exact same way a SteeringBehaviour output
 
 	//@End (Demo Purposes)
 
-	m_GrabItem = false; //Reset State
-	m_UseItem = false;
-	m_RemoveItem = false;
-	m_DestroyItemsInFOV = false;
+	//m_GrabItem = false; //Reset State
+	//m_UseItem = false;
+	//m_RemoveItem = false;
+	//m_DestroyItemsInFOV = false;
 
-	return steering;
+	return *steering;
 }
 
 //This function should only be used for rendering debug elements
@@ -237,4 +301,87 @@ void SurvivalAgentPlugin::Render(float dt) const
 	m_pInterface->Draw_SolidCircle(m_Target, .7f, { 0,0 }, { 1, 0, 0 });
 }
 
+
+void SurvivalAgentPlugin::InitializeBlackboard()
+{
+	m_pBlackboard->AddData("DeltaTime", 0.0f);
+	//items
+	m_pBlackboard->AddData("Inventory", m_pItemManager);
+	/*m_pBlackboard->AddData("Medkits", m_pMedKitsLoot);
+	m_pBlackboard->AddData("Pistols", m_pPistolsLoot);
+	m_pBlackboard->AddData("ShotGuns", m_pShotGunsLoot);
+	m_pBlackboard->AddData("Food", m_pFoodLoot);
+
+	m_pBlackboard->AddData("Houses", m_pHousesMemory);*/
+
+	m_pBlackboard->AddData("Interface", m_pInterface);
+	m_pBlackboard->AddData("Steering", m_pSteeringOutput);
+	m_pBlackboard->AddData("EnemiesInFOV", m_EnemiesInFov);
+	m_pBlackboard->AddData("PurgeZonesInFOV", m_PurgeZonesInFov);
+	m_pBlackboard->AddData("HousesInFOV", m_HousesInFov);
+
+}
+
+void SurvivalAgentPlugin::InitializeBT()
+{
+	Elite::BehaviorTree* pBehaviorTree
+	{
+		new Elite::BehaviorTree
+		{
+			m_pBlackboard,
+			new Elite::BehaviorSelector
+			{
+				{
+					//flee purge zone
+					new Elite::BehaviorSequence
+					{
+						{
+							new Elite::BehaviorConditional{BT_Conditions::IsInsidePurgeZone},
+							new Elite::BehaviorAction{ BT_Actions::FleePurgeZone}
+						}
+					},
+
+					// Try to shoot enemies
+					//new Elite::BehaviorSequence
+					//{
+					//	{
+					//		new Elite::BehaviorConditional{ BT_Conditions::IsEnemyInFOV },
+					//		new Elite::BehaviorConditional{ BT_Conditions::HasAGun },
+					//		//new Elite::BehaviorAction{ BT_Actions::AimAndShoot }
+					//	}
+					//},
+		//Explore if nothing else to do
+		new Elite::BehaviorAction{ BT_Actions::Explore }
+		//new Elite::BehaviorAction{ BT_Actions::RevisitHouses }
+
+
+				}
+			}
+		}
+
+	};
+
+	m_pBehaviorTree = pBehaviorTree;
+
+}
+
+void SurvivalAgentPlugin::GetEntitiesInFov()
+{
+	//Get Enemies in FOV
+	m_EnemiesInFov = m_pInterface->GetEnemiesInFOV();
+	m_pBlackboard->ChangeData("EnemiesInFOV", m_EnemiesInFov);
+
+	//Get Purge Zones in FOV
+	m_PurgeZonesInFov = m_pInterface->GetPurgeZonesInFOV();
+	m_pBlackboard->ChangeData("PurgeZonesInFOV", m_PurgeZonesInFov);
+
+	//Get Houses in FOV
+	m_HousesInFov = m_pInterface->GetHousesInFOV();
+	m_pBlackboard->ChangeData("HousesInFOV", m_HousesInFov);
+}
+
+void SurvivalAgentPlugin::UseResourcesIfNeeded()
+{
+	if (m_pInterface->Agent_GetInfo().Health);
+}
 

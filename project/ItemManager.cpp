@@ -41,7 +41,7 @@ bool ItemManager::IsFull() const
 
 void ItemManager::UseMedKit() //will check if med Kit aviable and HP  > treshold in agent manager
 {
-	if (!HaveItem(eItemType::MEDKIT))
+	if (!HasItem(eItemType::MEDKIT))
 	{
 		std::wcout << L"No MedKit in inventory!\n";
 		return;
@@ -56,18 +56,66 @@ void ItemManager::UseMedKit() //will check if med Kit aviable and HP  > treshold
 		m_pInterface->Inventory_RemoveItem(slot);
 		m_Inventory.at(slot) = eItemType::RANDOM_DROP; //temp will be rewriten when new item is added
 	}
-
-
 }
+
+void ItemManager::UseShotGun()
+{
+	if (!HasItem(eItemType::SHOTGUN))
+	{
+		std::wcout << L"No Gun in the inventory!\n";
+		return;
+	}
+
+	UINT slot = GetSlotWithItem(eItemType::SHOTGUN);
+
+	ItemInfo itemInfo{};
+	if (m_pInterface->Inventory_GetItem(slot, itemInfo))
+	{
+		m_pInterface->Inventory_UseItem(slot);
+		std::wcout << L"Pew Pew!\n";
+
+		if (itemInfo.Value <= 0)
+		{
+			m_pInterface->Inventory_RemoveItem(slot);
+			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
+			std::wcout << L"Gun discarted, out of ammo!\n";
+		}
+	}
+}
+void ItemManager::UsePistol()
+{
+	if (!HasItem(eItemType::PISTOL))
+	{
+		std::wcout << L"No Gun in the inventory!\n";
+		return;
+	}
+
+	UINT slot = GetSlotWithItem(eItemType::PISTOL);
+
+	ItemInfo itemInfo{};
+	if (m_pInterface->Inventory_GetItem(slot, itemInfo))
+	{
+		m_pInterface->Inventory_UseItem(slot);
+		std::wcout << L"Pew Pew!\n";
+
+		if (itemInfo.Value <= 0)
+		{
+			m_pInterface->Inventory_RemoveItem(slot);
+			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
+			std::wcout << L"Gun discarted, out of ammo!\n";
+		}
+	}
+
+};
 void ItemManager::UseGun() //in agent use a gun after aiming to the target
 {
-	if (!HaveItem(eItemType::PISTOL) && !HaveItem(eItemType::SHOTGUN))
+	if (!HasItem(eItemType::PISTOL) && !HasItem(eItemType::SHOTGUN))
 	{
 		std::wcout << L"No Gun in the inventory!\n";
 		return;
 	}
 	eItemType gunType{};
-	if (HaveItem(eItemType::SHOTGUN)) //shotgun preference //maybe will change depending on zombie type
+	if (HasItem(eItemType::SHOTGUN)) //shotgun preference //maybe will change depending on zombie type
 		gunType = eItemType::SHOTGUN;
 	else
 		gunType = eItemType::PISTOL;
@@ -88,12 +136,27 @@ void ItemManager::UseGun() //in agent use a gun after aiming to the target
 		}
 	}
 }
-void ItemManager::UseFood() // in agent use food only when needed
+void ItemManager::UseFood() 
 {
-	if (!HaveItem(eItemType::FOOD))
+	if (!HasItem(eItemType::FOOD))
 	{
 		std::wcout << L"No food in inventory!\n";
 		return;
+	}
+
+	UINT slot = GetSlotWithItem(eItemType::FOOD);
+	ItemInfo itemInfo{};
+	if (m_pInterface->Inventory_GetItem(slot, itemInfo))
+	{
+		m_pInterface->Inventory_UseItem(slot);
+		std::wcout << L"Nom Nom!\n";
+
+		if (itemInfo.Value <= 0)
+		{
+			m_pInterface->Inventory_RemoveItem(slot);
+			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
+			std::wcout << L"Food discarted from a slot, no food left!\n";
+		}
 	}
 
 }
@@ -117,7 +180,7 @@ void ItemManager::AddItem(ItemInfo ItemInfo) //needs to be grabbed by agent firs
 	}
 }
 
-bool ItemManager::HaveItem(eItemType itemType) const
+bool ItemManager::HasItem(eItemType itemType) const
 {
 	for (eItemType item : m_Inventory)
 	{

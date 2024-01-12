@@ -21,7 +21,7 @@ class ISteeringBehavior
 {
 public:
 	ISteeringBehavior() = default;
-	virtual ~ISteeringBehavior() = default;
+	virtual ~ISteeringBehavior() { delete m_pSteering; };
 
 	virtual SteeringPlugin_Output* CalculateSteering( AgentInfo agent) = 0;
 
@@ -34,7 +34,8 @@ public:
 
 protected:
 	TargetData m_Target;
-	IExamInterface* m_pInterface = nullptr;
+	SteeringPlugin_Output* m_pSteering;
+	//IExamInterface* m_pInterface = nullptr;
 };
 #pragma endregion
 
@@ -49,6 +50,20 @@ public:
 
 	//Seek Behaviour
 	SteeringPlugin_Output* CalculateSteering( AgentInfo agent) override;
+};
+
+///////////////////////////////////////
+//FACE
+//****
+class Face : public ISteeringBehavior
+{
+public:
+	Face() = default;
+	virtual ~Face() = default;
+
+
+	SteeringPlugin_Output* CalculateSteering(AgentInfo agent) override;
+	
 };
 
 
@@ -70,6 +85,7 @@ public:
 
 private:
 	float m_FleeRadius = 40.f;
+	
 
 };
 
@@ -155,9 +171,25 @@ class OffsetPursuit : public Pursuit
 public:
 	OffsetPursuit() = default;
 	virtual ~OffsetPursuit() = default;
+	SteeringPlugin_Output* CalculateSteering(AgentInfo agent) override;
 
 protected:
 	Elite::Vector2 m_Offset{ 5.f,5.f };
-	SteeringPlugin_Output* CalculateSteering( AgentInfo agent) override;
+	
 
 };
+
+///////////////////////////////////////
+//Spin Arround
+//****
+class SpinAround : public ISteeringBehavior
+{
+public:
+	SpinAround() = default;
+	virtual ~SpinAround() = default;
+
+	
+	SteeringPlugin_Output* CalculateSteering(AgentInfo agent) override;
+
+};
+

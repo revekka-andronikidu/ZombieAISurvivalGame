@@ -14,7 +14,7 @@ using namespace Elite;
 //****
 SteeringPlugin_Output* Seek::CalculateSteering( AgentInfo agent)
 {
-	SteeringPlugin_Output* steering { new SteeringPlugin_Output() };
+	m_pSteering = new SteeringPlugin_Output();
 
 	Vector2 currentPosition = agent.Position; 
 	Vector2 targetPos = m_Target.Position;
@@ -22,19 +22,41 @@ SteeringPlugin_Output* Seek::CalculateSteering( AgentInfo agent)
 	Vector2 direction = targetPos - currentPosition;
 	direction.Normalize();
 
-	steering->LinearVelocity = direction * agent.MaxLinearSpeed; 
+	m_pSteering->LinearVelocity = direction * agent.MaxLinearSpeed;
 
 	//debug
-	m_pInterface->Draw_SolidCircle(m_Target.Position, .7f, { 0,0 }, { 1, 0, 0 });
+	//m_pInterface->Draw_SolidCircle(m_Target.Position, .7f, { 0,0 }, { 1, 0, 0 });
 
-	return steering;
+	return m_pSteering;
+}
+
+//FACE
+SteeringPlugin_Output* Face::CalculateSteering(AgentInfo agent)
+{
+	m_pSteering = new SteeringPlugin_Output();
+
+	Elite::Vector2 desiredDirection = (m_Target.Position - agent.Position);
+	desiredDirection.Normalize();
+
+	const float agentRot{ agent.Orientation + 0.5f * static_cast<float>(M_PI) };
+	Elite::Vector2 agentDirection{ std::cosf(agentRot),std::sinf(agentRot) };
+
+	m_pSteering->AngularVelocity = (desiredDirection.Dot(agentDirection)) * agent.MaxAngularSpeed;
+
+
+	//debug
+	auto dir = agent.Position - m_Target.Position;
+	auto dist = dir.Normalize();
+	//m_pInterface->Draw_Direction(agent.Position, dir, dist, Elite::Vector3{ 1.f,0,1.0f });
+
+	return m_pSteering;
 }
 
 //FLEE
 //****
 SteeringPlugin_Output* Flee::CalculateSteering( AgentInfo agent)
 {
-	SteeringPlugin_Output* steering{ new SteeringPlugin_Output() };
+	m_pSteering =  new SteeringPlugin_Output() ;
 
 	Vector2 currentPosition = agent.Position;
 	Vector2 targetPos = m_Target.Position;
@@ -48,11 +70,11 @@ SteeringPlugin_Output* Flee::CalculateSteering( AgentInfo agent)
 		//return steering; //
 	//}
 
-	steering->LinearVelocity = toTarget;
-	steering->LinearVelocity.Normalize();
-	steering->LinearVelocity *= agent.MaxLinearSpeed;
+	m_pSteering->LinearVelocity = toTarget;
+	m_pSteering->LinearVelocity.Normalize();
+	m_pSteering->LinearVelocity *= agent.MaxLinearSpeed;
 
-	return steering;
+	return m_pSteering;
 }
 
 
@@ -61,7 +83,7 @@ SteeringPlugin_Output* Flee::CalculateSteering( AgentInfo agent)
 //****
 SteeringPlugin_Output* Arrive::CalculateSteering( AgentInfo agent)
 {
-	SteeringPlugin_Output* steering{ new SteeringPlugin_Output() };
+	m_pSteering = new SteeringPlugin_Output();
 
 	Vector2 currentPosition = agent.Position;
 	Vector2 targetPos = m_Target.Position;
@@ -80,14 +102,14 @@ SteeringPlugin_Output* Arrive::CalculateSteering( AgentInfo agent)
 		speed *= distanceSquared / (m_SlowRadius * m_SlowRadius);
 	}
 
-	steering->LinearVelocity = toTarger * speed;
+	m_pSteering->LinearVelocity = toTarger * speed;
 
 	if (distanceSquared < m_TargetRadius * m_TargetRadius) //stop when arrived
 	{
-		steering->LinearVelocity = Vector2{ 0,0 };
+		m_pSteering->LinearVelocity = Vector2{ 0,0 };
 	}
 
-	return steering;
+	return m_pSteering;
 }
 
 //PURSUIT
@@ -159,3 +181,15 @@ SteeringPlugin_Output* OffsetPursuit::CalculateSteering( AgentInfo agent)
 
 	return Pursuit::CalculateSteering( agent);
 }
+
+//SPIN AROUND
+SteeringPlugin_Output* SpinAround::CalculateSteering(AgentInfo agent)
+{
+
+	m_pSteering = new SteeringPlugin_Output();
+
+	m_pSteering->AngularVelocity = agent.MaxAngularSpeed;
+
+	return m_pSteering;
+}
+

@@ -181,6 +181,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BehaviourTree\Behaviours.h" />
+    <ClInclude Include="BehaviourTree\EBehaviorTree.h" />
+    <ClInclude Include="BehaviourTree\EDecisionMaking.h" />
+    <ClInclude Include="EBlackboard.h" />
     <ClInclude Include="ItemManager.h" />
     <ClInclude Include="SteeringBehaviours\SteeringBehaviors.h" />
     <ClInclude Include="SteeringBehaviours\SteeringHelpers.h" />
@@ -188,6 +192,7 @@
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BehaviourTree\EBehaviorTree.cpp" />
     <ClCompile Include="ItemManager.cpp" />
     <ClCompile Include="SteeringBehaviours\SteeringBehaviors.cpp" />
     <ClCompile Include="SurvivalAgentPlugin.cpp" />

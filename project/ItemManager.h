@@ -21,12 +21,14 @@ public:
 	bool IsFull( ) const;
 
 	void UseMedKit();
-	void UseGun();
+	void UseShotGun();
+	void UsePistol();
+	void UseGun(); 
 	void UseFood();
 	
 
 	void AddItem(ItemInfo itemInfo);
-	bool HaveItem(eItemType itemType) const;
+	bool HasItem(eItemType itemType) const;
 	UINT GetSlotWithItem(eItemType itemType) const;
 
 private:
