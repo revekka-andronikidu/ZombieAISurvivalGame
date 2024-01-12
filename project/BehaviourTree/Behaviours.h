@@ -14,9 +14,10 @@
 #include "Exam_HelperStructs.h"
 #include "EBehaviorTree.h"
 #include "ItemManager.h"
+#include "Steering.h"
 #include "..\inc\EliteMath\EVector2.h"
 //#include "projects/DecisionMaking/SmartAgent.h"
-#include "SteeringBehaviours/SteeringBehaviors.h"
+//#include "SteeringBehaviours/SteeringBehaviors.h"
 //#include "projects/Movement/SteeringBehaviors/PathFollow/PathFollowSteeringBehavior.h"
 
 //-----------------------------------------------------------------
@@ -34,8 +35,8 @@ namespace BT_Actions
 		if (pBlackboard->GetData("PurgeZonesInFOV", purgeZonesInFOV) == false || purgeZonesInFOV.empty())
 			return Elite::BehaviorState::Failure;
 
-		SteeringPlugin_Output* pSteeringOutput{ nullptr };
-		if (!pBlackboard->GetData("Steering", pSteeringOutput))
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
 			return Elite::BehaviorState::Failure;
 
 		IExamInterface* pInterface{ nullptr };
@@ -46,33 +47,27 @@ namespace BT_Actions
 		auto agentInfo = pInterface->Agent_GetInfo();
 
 		
-		float safeMargin{ 25.f };
-		auto steering = new Flee();
+		float safeMargin{ 50.f };
+		
 		
 
 		for (const auto& purgeZone : purgeZonesInFOV)
 		{
-			while (Elite::Distance(agentInfo.Position, purgeZone.Center) + safeMargin < purgeZone.Radius)
-			{
-				steering->SetTarget(purgeZone.Center);
-				pSteeringOutput = steering->CalculateSteering(agentInfo);
+			pSteering->Flee(purgeZone.Center);
+
+			
+				pSteering->Flee(purgeZone.Center);
+				pSteering->SpinAround();
 				
+				if (agentInfo.Stamina > 2.f)
+					pSteering->Run(true);
 
-
-				if (agentInfo.Stamina > 0.4f)
-					pSteeringOutput->RunMode = true;
-
-				else if (agentInfo.Stamina <= 0.f)
-					pSteeringOutput->RunMode = false;
-
-				pBlackboard->ChangeData("Steering", pSteeringOutput);
-				delete steering;
-				return Elite::BehaviorState::Running;
-			}
-			delete steering;
+				else if (agentInfo.Stamina <= 0.1f)
+					pSteering->Run(false);
+					
+			
 			return Elite::BehaviorState::Success;
-		}
-		delete steering;
+		}	
 	}
 
 	//shoot
@@ -86,8 +81,8 @@ namespace BT_Actions
 		if (!pBlackboard->GetData("EnemiesInFOV", pEnemiesVector))
 			return Elite::BehaviorState::Failure;
 
-		SteeringPlugin_Output* pSteeringOutput{ nullptr };
-		if (!pBlackboard->GetData("Steering", pSteeringOutput))
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
 			return Elite::BehaviorState::Failure;
 
 		IExamInterface* pInterface{ nullptr };
@@ -95,7 +90,7 @@ namespace BT_Actions
 			return Elite::BehaviorState::Failure;
 
 		auto agentInfo = pInterface->Agent_GetInfo();
-		pSteeringOutput->AutoOrient = false;
+		
 
 
 		//shoot shot gun or pistol
@@ -115,15 +110,13 @@ namespace BT_Actions
 
 		const float angleMargin{ 0.05f };
 
-		Face* steering{};
-		steering->SetTarget(closestEnemy.Location);
+		
+	
 
 		if (!std::abs(agentInfo.Orientation - std::atan2(desiredDirection.y, desiredDirection.x)) < angleMargin)
 		{
-			pSteeringOutput = steering->CalculateSteering(agentInfo);
-			pBlackboard->ChangeData("Steering", pSteeringOutput);
-			
-				return Elite::BehaviorState::Running;
+			pSteering->Face(closestEnemy.Location);
+			return Elite::BehaviorState::Running;
 		}
 		else
 		{
@@ -160,8 +153,8 @@ namespace BT_Actions
 	//explore
 	Elite::BehaviorState Explore(Elite::Blackboard* pBlackboard)
 	{
-		SteeringPlugin_Output* pSteeringOutput{ nullptr };
-		if (!pBlackboard->GetData("Steering", pSteeringOutput))
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
 			return Elite::BehaviorState::Failure;
 
 		IExamInterface* pInterface{ nullptr };
@@ -170,16 +163,13 @@ namespace BT_Actions
 
 		auto agentInfo = pInterface->Agent_GetInfo();
 		
-		auto wander = new Wander();
 	
-		pSteeringOutput = wander->CalculateSteering(agentInfo);
-		pSteeringOutput->RunMode = false;
-		pSteeringOutput->AutoOrient = false;
-		//pSteeringOutput->AngularVelocity += 0.2f;
-
-		pBlackboard->ChangeData("Steering", pSteeringOutput);
+	
+		pSteering->Wander();
+		pSteering->Run(false);	
+		pSteering->SpinAround();
 		
-		delete wander;
+	
 		return Elite::BehaviorState::Success;
 	}
 }

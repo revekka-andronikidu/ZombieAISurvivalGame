@@ -4,18 +4,17 @@
     <ClCompile Include="SurvivalAgentPlugin.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="ItemManager.cpp" />
-    <ClCompile Include="SteeringBehaviours\SteeringBehaviors.cpp" />
     <ClCompile Include="BehaviourTree\EBehaviorTree.cpp" />
+    <ClCompile Include="Steering.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SurvivalAgentPlugin.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="ItemManager.h" />
-    <ClInclude Include="SteeringBehaviours\SteeringBehaviors.h" />
-    <ClInclude Include="SteeringBehaviours\SteeringHelpers.h" />
     <ClInclude Include="EBlackboard.h" />
     <ClInclude Include="BehaviourTree\EBehaviorTree.h" />
     <ClInclude Include="BehaviourTree\EDecisionMaking.h" />
     <ClInclude Include="BehaviourTree\Behaviours.h" />
+    <ClInclude Include="Steering.h" />
   </ItemGroup>
 </Project>

@@ -104,6 +104,22 @@ BehaviorState BehaviorConditional::Execute(Blackboard* pBlackBoard)
 	}
 	return m_CurrentState;
 }
+
+BehaviorState Elite::BehaviorInvertConditional::Execute(Blackboard* pBlackBoard)
+{
+	if (m_fpConditional == nullptr)
+		return BehaviorState::Failure;
+
+	switch (m_fpConditional(pBlackBoard))
+	{
+	case true:
+		m_CurrentState = BehaviorState::Failure;
+		return m_CurrentState;
+	case false:
+		m_CurrentState = m_CurrentState = BehaviorState::Success;
+		return m_CurrentState;
+	}
+}
 //-----------------------------------------------------------------
 // BEHAVIOR TREE ACTION (IBehavior)
 //-----------------------------------------------------------------

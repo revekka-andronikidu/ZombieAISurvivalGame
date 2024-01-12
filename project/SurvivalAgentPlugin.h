@@ -1,6 +1,7 @@
 #pragma once
 #include "IExamPlugin.h"
 #include "Exam_HelperStructs.h"
+#include "Steering.h"
 #include "EBlackboard.h"
 #include "BehaviourTree/EBehaviorTree.h"
 
@@ -52,7 +53,7 @@ private:
 	std::vector<HouseInfo*> m_pHousesMemory;*/
 
 	SteeringPlugin_Output* m_pSteeringOutput;
-	
+	Steering* m_pSteering;
 
 	std::vector<EnemyInfo> m_EnemiesInFov;
 	std::vector<PurgeZoneInfo> m_PurgeZonesInFov;
