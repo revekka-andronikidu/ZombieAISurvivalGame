@@ -12,10 +12,10 @@ public:
 	ItemManager(IExamInterface* pInterface);
 	~ItemManager() = default;
 
-	ItemManager(const ItemManager& inventoryManager) = delete;
-	ItemManager(ItemManager&& inventoryManager) = delete;
-	ItemManager& operator=(const ItemManager& inventoryManager) = delete;
-	ItemManager& operator=(ItemManager&& inventoryManager) = delete;
+	ItemManager(const ItemManager& itemManager) = delete;
+	ItemManager(ItemManager&& itemManager) = delete;
+	ItemManager& operator=(const ItemManager& itemManager) = delete;
+	ItemManager& operator=(ItemManager&& itemManager) = delete;
 
 	UINT GetFreeSlot() const;
 	bool IsFull( ) const;
@@ -33,7 +33,7 @@ public:
 
 private:
 	IExamInterface* m_pInterface;
-	std::vector< eItemType> m_Inventory;
+	std::vector< eItemType> m_Inventory{};
 	UINT m_Full;
 };
 

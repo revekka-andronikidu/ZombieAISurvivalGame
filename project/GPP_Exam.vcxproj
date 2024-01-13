@@ -185,6 +185,7 @@
     <ClInclude Include="BehaviourTree\EBehaviorTree.h" />
     <ClInclude Include="BehaviourTree\EDecisionMaking.h" />
     <ClInclude Include="EBlackboard.h" />
+    <ClInclude Include="Explorer.h" />
     <ClInclude Include="ItemManager.h" />
     <ClInclude Include="Steering.h" />
     <ClInclude Include="SurvivalAgentPlugin.h" />
@@ -192,6 +193,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BehaviourTree\EBehaviorTree.cpp" />
+    <ClCompile Include="Explorer.cpp" />
     <ClCompile Include="ItemManager.cpp" />
     <ClCompile Include="Steering.cpp" />
     <ClCompile Include="SurvivalAgentPlugin.cpp" />

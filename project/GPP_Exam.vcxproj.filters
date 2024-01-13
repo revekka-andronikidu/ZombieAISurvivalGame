@@ -6,6 +6,7 @@
     <ClCompile Include="ItemManager.cpp" />
     <ClCompile Include="BehaviourTree\EBehaviorTree.cpp" />
     <ClCompile Include="Steering.cpp" />
+    <ClCompile Include="Explorer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SurvivalAgentPlugin.h" />
@@ -16,5 +17,6 @@
     <ClInclude Include="BehaviourTree\EDecisionMaking.h" />
     <ClInclude Include="BehaviourTree\Behaviours.h" />
     <ClInclude Include="Steering.h" />
+    <ClInclude Include="Explorer.h" />
   </ItemGroup>
 </Project>

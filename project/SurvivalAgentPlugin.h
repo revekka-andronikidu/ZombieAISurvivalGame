@@ -4,6 +4,7 @@
 #include "Steering.h"
 #include "EBlackboard.h"
 #include "BehaviourTree/EBehaviorTree.h"
+#include "Explorer.h"
 
 class IBaseInterface;
 class IExamInterface;
@@ -55,11 +56,16 @@ private:
 	SteeringPlugin_Output* m_pSteeringOutput;
 	Steering* m_pSteering;
 
+	Explorer* m_pExplorer;
+
 	std::vector<EnemyInfo> m_EnemiesInFov;
 	std::vector<PurgeZoneInfo> m_PurgeZonesInFov;
 	std::vector<HouseInfo> m_HousesInFov;
+	std::vector<ItemInfo> m_ItemsInFov;
 
 	Elite::BehaviorTree* m_pBehaviorTree;
+
+
 
 	//MY FUNCTIONS
 	//initialization

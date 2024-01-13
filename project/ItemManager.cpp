@@ -6,6 +6,11 @@ ItemManager::ItemManager(IExamInterface* pInterface)
 {
 	m_Inventory.resize(m_pInterface->Inventory_GetCapacity());
 	m_Full = m_pInterface->Inventory_GetCapacity();
+
+	for (int idx{}; idx < m_Inventory.size(); idx++)
+	{	
+		m_Inventory[idx] = eItemType::RANDOM_DROP;
+	}
 }
 
 UINT ItemManager::GetFreeSlot() const
@@ -15,7 +20,6 @@ UINT ItemManager::GetFreeSlot() const
 	{
 		if (!m_pInterface->Inventory_GetItem(i, itemInfo))
 			return i;
-		
 	}
 
 	return m_Full;
@@ -72,7 +76,7 @@ void ItemManager::UseShotGun()
 	if (m_pInterface->Inventory_GetItem(slot, itemInfo))
 	{
 		m_pInterface->Inventory_UseItem(slot);
-		std::wcout << L"Pew Pew!\n";
+		//std::wcout << L"Pew Pew!\n";
 
 		if (itemInfo.Value <= 0)
 		{
@@ -96,9 +100,9 @@ void ItemManager::UsePistol()
 	if (m_pInterface->Inventory_GetItem(slot, itemInfo))
 	{
 		m_pInterface->Inventory_UseItem(slot);
-		std::wcout << L"Pew Pew!\n";
+		//std::wcout << L"Pew Pew!\n";
 
-		if (itemInfo.Value <= 0)
+		if (itemInfo.Value <= 0.f)
 		{
 			m_pInterface->Inventory_RemoveItem(slot);
 			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
@@ -126,9 +130,9 @@ void ItemManager::UseGun() //in agent use a gun after aiming to the target
 	if (m_pInterface->Inventory_GetItem(slot, itemInfo))
 	{
 		m_pInterface->Inventory_UseItem(slot);
-		std::wcout << L"Pew Pew!\n";
+		//std::wcout << L"Pew Pew!\n";
 
-		if (itemInfo.Value <= 0)
+		if (itemInfo.Value <= 0.f)
 		{
 			m_pInterface->Inventory_RemoveItem(slot);
 			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
@@ -151,7 +155,7 @@ void ItemManager::UseFood()
 		m_pInterface->Inventory_UseItem(slot);
 		std::wcout << L"Nom Nom!\n";
 
-		if (itemInfo.Value <= 0)
+		if (itemInfo.Value <= 0.f)
 		{
 			m_pInterface->Inventory_RemoveItem(slot);
 			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
@@ -165,7 +169,7 @@ void ItemManager::AddItem(ItemInfo ItemInfo) //needs to be grabbed by agent firs
 {
 	//add item into empty slot
 	UINT slot = GetFreeSlot();
-	if (!IsFull())
+	if (slot != m_Full)
 	{
 		if (ItemInfo.Type == eItemType::GARBAGE) //removes garbage when grabbed // make agent not to pick up garbage
 		{

@@ -4,6 +4,7 @@
 #include "ItemManager.h"
 #include "BehaviourTree/Behaviours.h"
 
+
 using namespace std;
 
 //Called only once, during initialization
@@ -21,6 +22,7 @@ void SurvivalAgentPlugin::Initialize(IBaseInterface* pInterface, PluginInfo& inf
 
 	//----------------------------
 	m_pItemManager = new ItemManager(m_pInterface);
+	m_pExplorer = new Explorer(m_pInterface);
 	m_pBlackboard = new Elite::Blackboard();
 	m_pSteeringOutput = new SteeringPlugin_Output{};
 	m_pSteering = new Steering(m_pInterface, m_pSteeringOutput);
@@ -46,6 +48,7 @@ void SurvivalAgentPlugin::DllShutdown()
 	SAFE_DELETE(m_pBehaviorTree);
 	SAFE_DELETE(m_pSteeringOutput);
 	SAFE_DELETE(m_pSteering);
+	SAFE_DELETE(m_pExplorer);
 
 	//delete m_pBlackboard; //deleted by behaviour tree
 	
@@ -92,10 +95,10 @@ void SurvivalAgentPlugin::InitGameDebugParams(GameDebugParams& params)
 	params.GodMode = true; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
 	params.AutoGrabClosestItem = true; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
-	params.StartingDifficultyStage = 1;
+	params.StartingDifficultyStage = 4;
 	params.InfiniteStamina = false;
-	params.SpawnDebugPistol = true;
-	params.SpawnDebugShotgun = true;
+	params.SpawnDebugPistol = false;
+	params.SpawnDebugShotgun = false;
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
@@ -108,65 +111,67 @@ void SurvivalAgentPlugin::Update_Debug(float dt)
 {
 	//Demo Event Code
 	//In the end your Agent should be able to walk around without external input
-	if (m_pInterface->Input_IsMouseButtonUp(Elite::InputMouseButton::eLeft))
-	{
-		//Update_Debug target based on input
-		Elite::MouseData mouseData = m_pInterface->Input_GetMouseData(Elite::InputType::eMouseButton, Elite::InputMouseButton::eLeft);
-		const Elite::Vector2 pos = Elite::Vector2(static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y));
-		m_Target = m_pInterface->Debug_ConvertScreenToWorld(pos);
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Space))
-	{
-		m_CanRun = true;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Left))
-	{
-		m_AngSpeed -= Elite::ToRadians(10);
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Right))
-	{
-		m_AngSpeed += Elite::ToRadians(10);
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_G))
-	{
-		m_GrabItem = true;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_U))
-	{
-		m_UseItem = true;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_R))
-	{
-		m_RemoveItem = true;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_X))
-	{
-		m_DestroyItemsInFOV = true;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyUp(Elite::eScancode_Space))
-	{
-		m_CanRun = false;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Delete))
-	{
-		m_pInterface->RequestShutdown();
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_KP_Minus))
-	{
-		if (m_InventorySlot > 0)
-			--m_InventorySlot;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_KP_Plus))
-	{
-		if (m_InventorySlot < 4)
-			++m_InventorySlot;
-	}
-	else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Q))
-	{
-		ItemInfo info = {};
-		m_pInterface->Inventory_GetItem(m_InventorySlot, info);
-		std::cout << (int)info.Type << std::endl;
-	}
+	//if (m_pInterface->Input_IsMouseButtonUp(Elite::InputMouseButton::eLeft))
+	//{
+	//	//Update_Debug target based on input
+	//	Elite::MouseData mouseData = m_pInterface->Input_GetMouseData(Elite::InputType::eMouseButton, Elite::InputMouseButton::eLeft);
+	//	const Elite::Vector2 pos = Elite::Vector2(static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y));
+	//	m_Target = m_pInterface->Debug_ConvertScreenToWorld(pos);
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Space))
+	//{
+	//	m_CanRun = true;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Left))
+	//{
+	//	m_AngSpeed -= Elite::ToRadians(10);
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Right))
+	//{
+	//	m_AngSpeed += Elite::ToRadians(10);
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_G))
+	//{
+	//	m_GrabItem = true;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_U))
+	//{
+	//	m_UseItem = true;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_R))
+	//{
+	//	m_RemoveItem = true;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_X))
+	//{
+	//	m_DestroyItemsInFOV = true;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyUp(Elite::eScancode_Space))
+	//{
+	//	m_CanRun = false;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Delete))
+	//{
+	//	m_pInterface->RequestShutdown();
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_KP_Minus))
+	//{
+	//	if (m_InventorySlot > 0)
+	//		--m_InventorySlot;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_KP_Plus))
+	//{
+	//	if (m_InventorySlot < 4)
+	//		++m_InventorySlot;
+	//}
+	//else if (m_pInterface->Input_IsKeyboardKeyDown(Elite::eScancode_Q))
+	//{
+	//	ItemInfo info = {};
+	//	m_pInterface->Inventory_GetItem(m_InventorySlot, info);
+	//	std::cout << (int)info.Type << std::endl;
+	//}
+
+	//m_pExplorer->DrawGrid();
 }
 
 //This function calculates the new SteeringOutput, called once per frame
@@ -181,6 +186,7 @@ SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 	//m_pBlackboard->ChangeData("")
 
 	//update decisions and select highrst priority task
+	//m_pExplorer->Update();
 	m_pBehaviorTree->Update(dt);
 
 	//update steering
@@ -205,6 +211,8 @@ void SurvivalAgentPlugin::InitializeBlackboard()
 	m_pBlackboard->AddData("DeltaTime", 0.0f);
 	//items
 	m_pBlackboard->AddData("Inventory", m_pItemManager);
+	m_pBlackboard->AddData("Interface", m_pInterface);
+	m_pBlackboard->AddData("Explorer", m_pExplorer);
 	/*m_pBlackboard->AddData("Medkits", m_pMedKitsLoot);
 	m_pBlackboard->AddData("Pistols", m_pPistolsLoot);
 	m_pBlackboard->AddData("ShotGuns", m_pShotGunsLoot);
@@ -212,12 +220,14 @@ void SurvivalAgentPlugin::InitializeBlackboard()
 
 	m_pBlackboard->AddData("Houses", m_pHousesMemory);*/
 
-	m_pBlackboard->AddData("Interface", m_pInterface);
+	
 	m_pBlackboard->AddData("SteeringOutput", m_pSteeringOutput);
 	m_pBlackboard->AddData("Steering", m_pSteering);
+
 	m_pBlackboard->AddData("EnemiesInFOV", m_EnemiesInFov);
 	m_pBlackboard->AddData("PurgeZonesInFOV", m_PurgeZonesInFov);
 	m_pBlackboard->AddData("HousesInFOV", m_HousesInFov);
+	m_pBlackboard->AddData("ItemsInFOV", m_ItemsInFov);
 
 	
 
@@ -237,20 +247,72 @@ void SurvivalAgentPlugin::InitializeBT()
 					new Elite::BehaviorSequence
 					{
 						{
-							new Elite::BehaviorConditional{BT_Conditions::IsPurgeZoneInFOV},
-							new Elite::BehaviorAction{ BT_Actions::FleePurgeZone}
+							new Elite::BehaviorConditional{&BT_Conditions::IsPurgeZoneInFOV},
+							new Elite::BehaviorAction{&BT_Actions::FleePurgeZone}
 						}
 					},
+					new Elite::BehaviorSequence //Enemies
+					(
+					{
+						new Elite::BehaviorConditional(&BT_Conditions::IsInDanger), //Enemy in FOV or was Bitten
+						new Elite::BehaviorSelector
+						(
+							{
+								new Elite::BehaviorSequence // Try to shoot enemies
+								(
+									{
+										new Elite::BehaviorConditional{ &BT_Conditions::IsEnemyInFOV },
+										new Elite::BehaviorConditional{ &BT_Conditions::HasAGun },
+										new Elite::BehaviorAction{ &BT_Actions::AimAndShoot }
+									}
+								),
+								new Elite::BehaviorSequence //flee
+								(
+									{
+										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun },
+										new  Elite::BehaviorAction(&BT_Actions::FleeFromEnemy)
+										/*new Elite::BehaviorConditional{ BT_Conditions::IsEnemyInFOV },
+										new Elite::BehaviorInvertConditional{&BT_Conditions::IsPurgeZoneInFOV}
 
-					// Try to shoot enemies
-					//new Elite::BehaviorSequence
-					//{
-					//	{
-					//		new Elite::BehaviorConditional{ BT_Conditions::IsEnemyInFOV },
-					//		new Elite::BehaviorConditional{ BT_Conditions::HasAGun },
-					//		//new Elite::BehaviorAction{ BT_Actions::AimAndShoot }
-					//	}
-					//},
+										*/
+									}
+								),
+								
+							}
+						)
+					}
+					),
+					//Items
+					new Elite::BehaviorSequence
+					(
+					{
+					new Elite::BehaviorConditional(&BT_Conditions::IsItemInFOV),
+					new Elite::BehaviorSelector //take item if we need it
+						(
+							{
+								new Elite::BehaviorInvertConditional{&BT_Conditions::NeedClosestItem},
+								new Elite::BehaviorAction{&BT_Actions::TakeTheItem}//destroy garbage
+								//new Elite::BehaviorAction(BT_Actions::RememberSpot)
+							}
+						),
+						new Elite::BehaviorSequence //remember spot if we have item
+						(
+							{
+								//new Elite::BehaviorInvertConditional{BT_Conditions::NeedTheItem},
+								//new Elite::BehaviorAction(BT_Actions::RememberSpot)
+							}
+						),
+					}
+					),
+				
+				//search gun from memory
+				// search food from memory
+				//search food from memory
+				// //search houses
+				// revisit empty spots
+				
+
+
 		//Explore if nothing else to do
 		new Elite::BehaviorAction{ BT_Actions::Explore }
 		//new Elite::BehaviorAction{ BT_Actions::RevisitHouses }
@@ -279,10 +341,28 @@ void SurvivalAgentPlugin::GetEntitiesInFov()
 	//Get Houses in FOV
 	m_HousesInFov = m_pInterface->GetHousesInFOV();
 	m_pBlackboard->ChangeData("HousesInFOV", m_HousesInFov);
+
+	m_ItemsInFov = m_pInterface->GetItemsInFOV();
+	m_pBlackboard->ChangeData("ItemsInFOV", m_ItemsInFov);
 }
 
 void SurvivalAgentPlugin::UseResourcesIfNeeded()
 {
-	if (m_pInterface->Agent_GetInfo().Health);
+	
+	if (m_pItemManager->HasItem(eItemType::MEDKIT))
+	{
+		if (m_pInterface->Agent_GetInfo().Health <= 6.f)
+			m_pItemManager->UseMedKit();
+	}
+
+	if (m_pItemManager->HasItem(eItemType::FOOD))
+	{
+		if (m_pInterface->Agent_GetInfo().Energy <= 3.f)
+		m_pItemManager->UseFood();
+	}
+
+
+	//iprove this to add egaent max and check we are not taking when it is not needed
 }
+
 
