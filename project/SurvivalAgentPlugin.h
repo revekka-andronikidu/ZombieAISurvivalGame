@@ -45,13 +45,10 @@ private:
 	ItemManager* m_pItemManager {nullptr};
 	Elite::Blackboard* m_pBlackboard{nullptr};
 
-	//Items found == create exlorer for this
-	/*std::vector<ItemInfo*> m_pPistolsLoot;
-	std::vector<ItemInfo*> m_pShotGunsLoot;
-	std::vector<ItemInfo*> m_pMedKitsLoot;
-	std::vector<ItemInfo*> m_pFoodLoot;
+	std::vector<ItemInfo*> m_pItemsMemory{};
+	
 
-	std::vector<HouseInfo*> m_pHousesMemory;*/
+	//std::vector<HouseInfo*> m_pHousesMemory;
 
 	SteeringPlugin_Output* m_pSteeringOutput;
 	Steering* m_pSteering;

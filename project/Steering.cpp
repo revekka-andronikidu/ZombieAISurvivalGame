@@ -71,6 +71,13 @@ void Steering::SpinAround()
 	m_pSteering->AngularVelocity = agentInfo.MaxAngularSpeed;
 }
 
+void Steering::Stop()
+{
+	
+	m_pSteering->LinearVelocity = {0.f,0.f};
+	
+}
+
 void Steering::Run(bool state)
 {
 	
@@ -83,9 +90,9 @@ void Steering::Wander()
 {
 	auto agentInfo = m_pInterface->Agent_GetInfo();
 	const float m_Radius = 4.f;
-	const float m_OffsetDistance = 6.f;
-	const int m_MaxAngleChange = 95;
-	float m_WanderAngle = 0.f;
+	const float m_OffsetDistance = 0.f;
+	const int m_MaxAngleChange = 180;
+	float m_WanderAngle = 360.f;
 
 	Elite::Vector2 currentPosition = agentInfo.Position;
 	Elite::Vector2 circleCenter{ currentPosition + agentInfo.LinearVelocity.GetNormalized() * m_OffsetDistance };

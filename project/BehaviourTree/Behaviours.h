@@ -99,11 +99,12 @@ namespace BT_Actions
 		}
 		Elite::Vector2 desiredDirection = (closestEnemy.Location - agentInfo.Position);
 
-		const float angleMargin{ 0.1f };
+		const float angleMargin{ 0.05f };
 	
 
 		if (std::abs(agentInfo.Orientation - std::atan2(desiredDirection.y, desiredDirection.x)) < angleMargin)
 		{	
+			pSteering->Stop();
 			//if more than 1 --> aim to closest one, shotgun if has
 			if (numberOfEnemies > 1)
 			{
@@ -161,7 +162,7 @@ namespace BT_Actions
 		
 	
 	
-		//pSteering->Wander();
+		pSteering->Wander();
 		pSteering->Run(false);	
 		pSteering->SpinAround();
 		
@@ -204,7 +205,7 @@ namespace BT_Actions
 
 		//pSteering->SpinAround();
 		pSteering->Flee(closestEnemy.Location);
-		pSteering->Face(closestEnemy.Location);
+		//pSteering->Face(closestEnemy.Location);
 
 		return Elite::BehaviorState::Success;
 	}
@@ -227,6 +228,10 @@ namespace BT_Actions
 		if (!pBlackboard->GetData("Interface", pInterface))
 			return Elite::BehaviorState::Failure;
 		auto agentInfo = pInterface->Agent_GetInfo();
+
+		std::vector<ItemInfo*> pMemory;
+		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pItemsInFOV.empty())
+			return Elite::BehaviorState::Failure;
 
 		
 
@@ -254,8 +259,14 @@ namespace BT_Actions
 			}
 			else 
 			{
-				//if item in memory pop
-				//todo
+				for (int i{}; i < pMemory.size(); i++) //if item in memory erase
+				{
+					if (closestItem.ItemHash == pMemory[i]->ItemHash)
+					{
+						pMemory.erase(pMemory.begin() + i);
+					}
+				}
+			
 				pInterface->GrabItem(closestItem);
 				pInventory->AddItem(closestItem);
 				return Elite::BehaviorState::Success;
@@ -263,12 +274,221 @@ namespace BT_Actions
 		}
 		else
 		{
-			/*pSteering->Seek(closestItem.Location);
-			pSteering->Face(closestItem.Location);
-			pSteering->AutoOrient(true);*/
 			return Elite::BehaviorState::Running;
 		}
 		return Elite::BehaviorState::Running;
+	}
+
+	Elite::BehaviorState SeekClosestFood(Elite::Blackboard* pBlackboard)
+	{
+
+		std::vector<ItemInfo*> pMemory;
+		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
+			return Elite::BehaviorState::Failure;
+
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return Elite::BehaviorState::Failure;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		ItemInfo closestFood{};
+		closestFood.Location = { FLT_MAX ,FLT_MAX };
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::FOOD)
+			{
+				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestFood.Location))
+				{
+					closestFood.Location = item->Location;
+				}
+			}
+		}
+
+		pSteering->Seek(closestFood.Location);
+		pSteering->SpinAround();
+		return Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState SeekClosestMedKit(Elite::Blackboard* pBlackboard)
+	{
+
+		std::vector<ItemInfo*> pMemory;
+		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
+			return Elite::BehaviorState::Failure;
+
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return Elite::BehaviorState::Failure;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		ItemInfo closestMedkit{};
+		closestMedkit.Location = { FLT_MAX ,FLT_MAX };
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::MEDKIT)
+			{
+				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestMedkit.Location))
+				{
+					closestMedkit.Location = item->Location;
+				}
+			}
+		}
+
+		pSteering->Seek(closestMedkit.Location);
+		pSteering->SpinAround();
+		return Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState SeekClosestPistol(Elite::Blackboard* pBlackboard)
+	{
+
+		std::vector<ItemInfo*> pMemory;
+		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
+			return Elite::BehaviorState::Failure;
+
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return Elite::BehaviorState::Failure;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		ItemInfo closestPistol{};
+		closestPistol.Location = { FLT_MAX ,FLT_MAX };
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::PISTOL)
+			{
+				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestPistol.Location))
+				{
+					closestPistol.Location = item->Location;
+				}
+			}
+		}
+
+		pSteering->Seek(closestPistol.Location);
+		pSteering->SpinAround();
+		return Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState SeekClosestShotgun(Elite::Blackboard* pBlackboard)
+	{
+
+		std::vector<ItemInfo*> pMemory;
+		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
+			return Elite::BehaviorState::Failure;
+
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return Elite::BehaviorState::Failure;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		ItemInfo closestShotgun{};
+		closestShotgun.Location = { FLT_MAX ,FLT_MAX };
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::SHOTGUN)
+			{
+				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestShotgun.Location))
+				{
+					closestShotgun.Location = item->Location;
+				}
+			}
+		}
+
+		pSteering->Seek(closestShotgun.Location);
+		pSteering->SpinAround();
+		return Elite::BehaviorState::Success;
+	}
+	Elite::BehaviorState SeekClosestGun(Elite::Blackboard* pBlackboard)
+	{
+
+		std::vector<ItemInfo*> pMemory;
+		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
+			return Elite::BehaviorState::Failure;
+
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return Elite::BehaviorState::Failure;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		ItemInfo closestGun{};
+		closestGun.Location = { FLT_MAX ,FLT_MAX };
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::PISTOL || item->Type == eItemType::SHOTGUN)
+			{
+				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestGun.Location))
+				{
+					closestGun.Location = item->Location;
+				}
+			}
+		}
+
+		pSteering->Seek(closestGun.Location);
+		pSteering->SpinAround();
+		return Elite::BehaviorState::Success;
+	}
+
+
+
+	Elite::BehaviorState RememberItem(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<ItemInfo> pItemsInFOV;
+		if (pBlackboard->GetData("ItemsInFOV", pItemsInFOV) == false || pItemsInFOV.empty())
+			return Elite::BehaviorState::Failure;
+
+		std::vector<ItemInfo*> pMemory;
+		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false)
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return Elite::BehaviorState::Failure;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		ItemInfo closestItem{};
+		closestItem.Location = { FLT_MAX ,FLT_MAX };
+		for (const ItemInfo& item : pItemsInFOV)
+		{
+			if (agentInfo.Position.Distance(item.Location) < agentInfo.Position.Distance(closestItem.Location))
+			{
+				closestItem = item;
+			}
+		}
+		
+		for (auto item : pMemory)
+		{
+			if (item == &closestItem) //if item already in memory return
+				return Elite::BehaviorState::Success;
+		}
+
+		pMemory.push_back(&closestItem);
+		pBlackboard->ChangeData("ItemsInMemory", pMemory);
+		return Elite::BehaviorState::Success;
 	}
 }
 
@@ -408,5 +628,119 @@ namespace BT_Conditions
 			
 	
 		return need;
+	}
+	bool DoesNeedFood(Elite::Blackboard* pBlackboard)
+	{
+		ItemManager* pInventory;
+		if (!pBlackboard->GetData("Inventory", pInventory))
+			return false;
+
+
+		return (!pInventory->HasItem(eItemType::FOOD));		
+	}
+	
+	bool DoesNeedMedKit(Elite::Blackboard* pBlackboard)
+	{
+		ItemManager* pInventory;
+		if (!pBlackboard->GetData("Inventory", pInventory))
+			return false;
+
+
+		return (!pInventory->HasItem(eItemType::MEDKIT));
+	}
+
+	bool DoesNeedGun(Elite::Blackboard* pBlackboard)
+	{
+		ItemManager* pInventory;
+		if (!pBlackboard->GetData("Inventory", pInventory))
+			return false;
+
+		
+		return (!pInventory->HasItem(eItemType::PISTOL) && !pInventory->HasItem(eItemType::SHOTGUN)); 
+	}
+	bool DoesNeedShotGun(Elite::Blackboard* pBlackboard)
+	{
+		ItemManager* pInventory;
+		if (!pBlackboard->GetData("Inventory", pInventory))
+			return false;
+
+		return (!pInventory->HasItem(eItemType::SHOTGUN));
+	}
+	bool DoesNeedPistol(Elite::Blackboard* pBlackboard)
+	{
+		ItemManager* pInventory;
+		if (!pBlackboard->GetData("Inventory", pInventory))
+			return false;
+
+		return (!pInventory->HasItem(eItemType::PISTOL));
+	}
+
+	bool RemembersFood(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<ItemInfo*> pMemory;
+		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
+			return false;
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::FOOD)
+				return true;
+		}
+		return false;
+	}
+
+	bool RemembersGun(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<ItemInfo*> pMemory;
+		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
+			return false;
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::PISTOL || item->Type == eItemType::SHOTGUN)
+				return true;
+		}
+		return false;
+	}
+
+	bool RemembersMedKit(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<ItemInfo*> pMemory;
+		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
+			return false;
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::MEDKIT)
+				return true;
+		}
+		return false;
+	}
+
+	bool RemembersPistol(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<ItemInfo*> pMemory;
+		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
+			return false;
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::PISTOL)
+				return true;
+		}
+		return false;
+	}
+	bool RemembersShotGun(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<ItemInfo*> pMemory;
+		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
+			return false;
+
+		for (auto item : pMemory)
+		{
+			if (item->Type == eItemType::SHOTGUN)
+				return true;
+		}
+		return false;
 	}
 }

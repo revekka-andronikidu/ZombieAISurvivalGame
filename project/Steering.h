@@ -22,6 +22,7 @@ public:
 	void SpinAround();
 	void Face(const Elite::Vector2& target);
 	void Run(bool state);
+	void Stop();
 	// StopMovement();
 private:
 	IExamInterface* m_pInterface = nullptr;

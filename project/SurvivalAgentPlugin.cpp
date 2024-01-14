@@ -49,39 +49,11 @@ void SurvivalAgentPlugin::DllShutdown()
 	SAFE_DELETE(m_pSteeringOutput);
 	SAFE_DELETE(m_pSteering);
 	SAFE_DELETE(m_pExplorer);
+	
+
 
 	//delete m_pBlackboard; //deleted by behaviour tree
 	
-	
-
-	//delete 
-	/*for (auto pistol : m_pPistolsLoot)
-	{
-		delete pistol;
-		pistol = nullptr;
-	}
-	m_pPistolsLoot.clear();
-
-	for (auto shotGun : m_pShotGunsLoot)
-	{
-		delete shotGun;
-		shotGun = nullptr;
-	}
-	for (auto medKit : m_pMedKitsLoot)
-	{
-		delete medKit;
-		medKit = nullptr;
-	}
-	for (auto food : m_pFoodLoot)
-	{
-		delete food;
-		food = nullptr;
-	}
-	for (auto house : m_pHousesMemory)
-	{
-		delete house;
-		house = nullptr;
-	}*/
 	
 }
 
@@ -95,9 +67,9 @@ void SurvivalAgentPlugin::InitGameDebugParams(GameDebugParams& params)
 	params.GodMode = true; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
 	params.AutoGrabClosestItem = true; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
-	params.StartingDifficultyStage = 4;
+	params.StartingDifficultyStage = 1;
 	params.InfiniteStamina = false;
-	params.SpawnDebugPistol = false;
+	params.SpawnDebugPistol = true;
 	params.SpawnDebugShotgun = false;
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
@@ -209,16 +181,15 @@ void SurvivalAgentPlugin::Render(float dt) const
 void SurvivalAgentPlugin::InitializeBlackboard()
 {
 	m_pBlackboard->AddData("DeltaTime", 0.0f);
-	//items
+	
 	m_pBlackboard->AddData("Inventory", m_pItemManager);
 	m_pBlackboard->AddData("Interface", m_pInterface);
 	m_pBlackboard->AddData("Explorer", m_pExplorer);
-	/*m_pBlackboard->AddData("Medkits", m_pMedKitsLoot);
-	m_pBlackboard->AddData("Pistols", m_pPistolsLoot);
-	m_pBlackboard->AddData("ShotGuns", m_pShotGunsLoot);
-	m_pBlackboard->AddData("Food", m_pFoodLoot);
+	
+	m_pBlackboard->AddData("ItemsInMemory", m_pItemsMemory);
+	
 
-	m_pBlackboard->AddData("Houses", m_pHousesMemory);*/
+	//m_pBlackboard->AddData("Houses", m_pHousesMemory);
 
 	
 	m_pBlackboard->AddData("SteeringOutput", m_pSteeringOutput);
@@ -271,10 +242,6 @@ void SurvivalAgentPlugin::InitializeBT()
 									{
 										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun },
 										new  Elite::BehaviorAction(&BT_Actions::FleeFromEnemy)
-										/*new Elite::BehaviorConditional{ BT_Conditions::IsEnemyInFOV },
-										new Elite::BehaviorInvertConditional{&BT_Conditions::IsPurgeZoneInFOV}
-
-										*/
 									}
 								),
 								
@@ -286,46 +253,87 @@ void SurvivalAgentPlugin::InitializeBT()
 					new Elite::BehaviorSequence
 					(
 					{
-					new Elite::BehaviorConditional(&BT_Conditions::IsItemInFOV),
-					new Elite::BehaviorSelector //take item if we need it
+						new Elite::BehaviorConditional(&BT_Conditions::IsItemInFOV),
+						new Elite::BehaviorSelector //take item if we need it
 						(
 							{
-								new Elite::BehaviorInvertConditional{&BT_Conditions::NeedClosestItem},
-								new Elite::BehaviorAction{&BT_Actions::TakeTheItem}//destroy garbage
-								//new Elite::BehaviorAction(BT_Actions::RememberSpot)
+								new Elite::BehaviorSequence
+								(
+								{
+									new Elite::BehaviorConditional{&BT_Conditions::NeedClosestItem},
+									new Elite::BehaviorAction{&BT_Actions::TakeTheItem},//destroy garbage
+								}
+							),
+							new Elite::BehaviorSequence //remember spot if we have item
+							(
+								{
+									new Elite::BehaviorInvertConditional{BT_Conditions::NeedClosestItem},
+									new Elite::BehaviorAction(BT_Actions::RememberItem)
+								}
+							),
 							}
-						),
-						new Elite::BehaviorSequence //remember spot if we have item
-						(
-							{
-								//new Elite::BehaviorInvertConditional{BT_Conditions::NeedTheItem},
-								//new Elite::BehaviorAction(BT_Actions::RememberSpot)
-							}
-						),
+						)
 					}
 					),
-				
-				//search gun from memory
-				// search food from memory
-				//search food from memory
-				// //search houses
-				// revisit empty spots
-				
-
-
-		//Explore if nothing else to do
-		new Elite::BehaviorAction{ BT_Actions::Explore }
-		//new Elite::BehaviorAction{ BT_Actions::RevisitHouses }
-
-
+					new Elite::BehaviorSequence //search for things from memory
+					(
+					{
+					 new Elite::BehaviorSelector //take item if we need it
+						(
+							{
+						new Elite::BehaviorSequence  // search food 
+						(
+							{
+								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedFood},
+								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersFood},
+								new Elite::BehaviorAction{&BT_Actions::SeekClosestFood}
+							}
+						),
+						new Elite::BehaviorSequence  //search closest gun when has neither
+						(
+							{
+								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedGun},
+								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersGun},
+								new Elite::BehaviorAction{&BT_Actions::SeekClosestGun}
+							}
+						),
+						new Elite::BehaviorSequence  //search medkit
+						(
+							{
+								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedMedKit},
+								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersMedKit},
+								new Elite::BehaviorAction{&BT_Actions::SeekClosestMedKit}
+							}
+						),
+						new Elite::BehaviorSequence  //search closest pistol 
+						(
+							{
+								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedPistol},
+								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersPistol},
+								new Elite::BehaviorAction{&BT_Actions::SeekClosestPistol}
+							}
+						),
+						new Elite::BehaviorSequence  //search closest shotgun 						
+						(
+							{
+								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedShotGun},
+								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersShotGun},
+								new Elite::BehaviorAction{&BT_Actions::SeekClosestShotgun}
+							}
+						),
+					 }
+					)
+						
+					}
+					),
+					//Explore if nothing else to do
+					new Elite::BehaviorAction{ BT_Actions::Explore }
 				}
 			}
 		}
-
 	};
 
 	m_pBehaviorTree = pBehaviorTree;
-
 }
 
 void SurvivalAgentPlugin::GetEntitiesInFov()
@@ -351,13 +359,13 @@ void SurvivalAgentPlugin::UseResourcesIfNeeded()
 	
 	if (m_pItemManager->HasItem(eItemType::MEDKIT))
 	{
-		if (m_pInterface->Agent_GetInfo().Health <= 6.f)
+		if (m_pInterface->Agent_GetInfo().Health <= 7.f)
 			m_pItemManager->UseMedKit();
 	}
 
 	if (m_pItemManager->HasItem(eItemType::FOOD))
 	{
-		if (m_pInterface->Agent_GetInfo().Energy <= 3.f)
+		if (m_pInterface->Agent_GetInfo().Energy <= 2.f)
 		m_pItemManager->UseFood();
 	}
 
