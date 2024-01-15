@@ -377,8 +377,11 @@ namespace BT_Actions
 		else if (agentInfo.Stamina <= 0.1f)
 			pSteering->Run(false);
 
+		Elite::Vector2 target = agentInfo.Position - closestEnemy.Location;
+		const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(target);
+		pSteering->Seek(nextTargetPos);
+		
 		//pSteering->SpinAround();
-		pSteering->Flee(closestEnemy.Location);
 		//pSteering->Face(closestEnemy.Location);
 
 		return Elite::BehaviorState::Success;
@@ -434,16 +437,17 @@ namespace BT_Actions
 			}
 			else 
 			{
+				pInterface->GrabItem(closestItem);
+				pInventory->AddItem(closestItem);
+
 				for (size_t i{}; i < pMemory.size(); i++) //if item in memory erase
 				{
 					if (&closestItem == pMemory[i])
 					{
-						pMemory.erase(pMemory.begin() + i);
+						//pMemory.erase(pMemory.begin() + i);
 					}
 				}
-			
-				pInterface->GrabItem(closestItem);
-				pInventory->AddItem(closestItem);
+				
 				return Elite::BehaviorState::Success;
 			}
 		}

@@ -27,6 +27,7 @@ void SurvivalAgentPlugin::Initialize(IBaseInterface* pInterface, PluginInfo& inf
 	m_pSteeringOutput = new SteeringPlugin_Output{};
 	m_pSteering = new Steering(m_pInterface, m_pSteeringOutput);
 
+	m_pItemsMemory.clear();
 	
 	InitializeBlackboard();
 
@@ -232,9 +233,10 @@ void SurvivalAgentPlugin::InitializeBT()
 										new Elite::BehaviorAction{ &BT_Actions::AimAndShoot }
 									}
 								),
-							//if is a house and enemy in fov -- move to next tile or next house to prevent getting stuck
 							
 							//hide in a house
+
+							//todo
 								new Elite::BehaviorSequence //flee
 								(
 									{
@@ -282,40 +284,40 @@ void SurvivalAgentPlugin::InitializeBT()
 						new Elite::BehaviorSequence  // search food 
 						(
 							{
-								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedFood},
-								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersFood},
+								new Elite::BehaviorConditional{&BT_Conditions::DoesNeedFood},
+								new Elite::BehaviorConditional{&BT_Conditions::RemembersFood},
 								new Elite::BehaviorAction{&BT_Actions::SeekClosestFood}
 							}
 						),
 						new Elite::BehaviorSequence  //search closest gun when has neither
 						(
 							{
-								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedGun},
-								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersGun},
+								new Elite::BehaviorConditional{&BT_Conditions::DoesNeedGun},
+								new Elite::BehaviorConditional{&BT_Conditions::RemembersGun},
 								new Elite::BehaviorAction{&BT_Actions::SeekClosestGun}
 							}
 						),
 						new Elite::BehaviorSequence  //search medkit
 						(
 							{
-								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedMedKit},
-								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersMedKit},
+								new Elite::BehaviorConditional{&BT_Conditions::DoesNeedMedKit},
+								new Elite::BehaviorConditional{&BT_Conditions::RemembersMedKit},
 								new Elite::BehaviorAction{&BT_Actions::SeekClosestMedKit}
 							}
 						),
 						new Elite::BehaviorSequence  //search closest pistol 
 						(
 							{
-								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedPistol},
-								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersPistol},
+								new Elite::BehaviorConditional{&BT_Conditions::DoesNeedPistol},
+								new Elite::BehaviorConditional{&BT_Conditions::RemembersPistol},
 								new Elite::BehaviorAction{&BT_Actions::SeekClosestPistol}
 							}
 						),
 						new Elite::BehaviorSequence  //search closest shotgun 						
 						(
 							{
-								new Elite::BehaviorInvertConditional{&BT_Conditions::DoesNeedShotGun},
-								new Elite::BehaviorInvertConditional{&BT_Conditions::RemembersShotGun},
+								new Elite::BehaviorConditional{&BT_Conditions::DoesNeedShotGun},
+								new Elite::BehaviorConditional{&BT_Conditions::RemembersShotGun},
 								new Elite::BehaviorAction{&BT_Actions::SeekClosestShotgun}
 							}
 						),
