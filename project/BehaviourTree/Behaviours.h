@@ -406,7 +406,7 @@ namespace BT_Actions
 			return Elite::BehaviorState::Failure;
 		auto agentInfo = pInterface->Agent_GetInfo();
 
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pItemsInFOV.empty())
 			return Elite::BehaviorState::Failure;
 
@@ -437,16 +437,17 @@ namespace BT_Actions
 			}
 			else 
 			{
-				pInterface->GrabItem(closestItem);
-				pInventory->AddItem(closestItem);
-
 				for (size_t i{}; i < pMemory.size(); i++) //if item in memory erase
 				{
-					if (&closestItem == pMemory[i])
+					if (closestItem.Location == pMemory[i].Location)
 					{
-						//pMemory.erase(pMemory.begin() + i);
+						pMemory.erase(pMemory.begin() + i);
+						pBlackboard->ChangeData("ItemsInMemory", pMemory);
 					}
 				}
+
+				pInterface->GrabItem(closestItem);
+				pInventory->AddItem(closestItem);
 				
 				return Elite::BehaviorState::Success;
 			}
@@ -461,7 +462,7 @@ namespace BT_Actions
 	Elite::BehaviorState SeekClosestFood(Elite::Blackboard* pBlackboard)
 	{
 
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
 			return Elite::BehaviorState::Failure;
 
@@ -479,11 +480,11 @@ namespace BT_Actions
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::FOOD)
+			if (item.Type == eItemType::FOOD)
 			{
-				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestFood.Location))
+				if (agentInfo.Position.Distance(item.Location) < agentInfo.Position.Distance(closestFood.Location))
 				{
-					closestFood.Location = item->Location;
+					closestFood.Location = item.Location;
 				}
 			}
 		}
@@ -499,7 +500,7 @@ namespace BT_Actions
 	Elite::BehaviorState SeekClosestMedKit(Elite::Blackboard* pBlackboard)
 	{
 
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
 			return Elite::BehaviorState::Failure;
 
@@ -517,11 +518,11 @@ namespace BT_Actions
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::MEDKIT)
+			if (item.Type == eItemType::MEDKIT)
 			{
-				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestMedkit.Location))
+				if (agentInfo.Position.Distance(item.Location) < agentInfo.Position.Distance(closestMedkit.Location))
 				{
-					closestMedkit.Location = item->Location;
+					closestMedkit.Location = item.Location;
 				}
 			}
 		}
@@ -537,7 +538,7 @@ namespace BT_Actions
 	Elite::BehaviorState SeekClosestPistol(Elite::Blackboard* pBlackboard)
 	{
 
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
 			return Elite::BehaviorState::Failure;
 
@@ -555,11 +556,11 @@ namespace BT_Actions
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::PISTOL)
+			if (item.Type == eItemType::PISTOL)
 			{
-				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestPistol.Location))
+				if (agentInfo.Position.Distance(item.Location) < agentInfo.Position.Distance(closestPistol.Location))
 				{
-					closestPistol.Location = item->Location;
+					closestPistol.Location = item.Location;
 				}
 			}
 		}
@@ -575,7 +576,7 @@ namespace BT_Actions
 	Elite::BehaviorState SeekClosestShotgun(Elite::Blackboard* pBlackboard)
 	{
 
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
 			return Elite::BehaviorState::Failure;
 
@@ -593,11 +594,11 @@ namespace BT_Actions
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::SHOTGUN)
+			if (item.Type == eItemType::SHOTGUN)
 			{
-				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestShotgun.Location))
+				if (agentInfo.Position.Distance(item.Location) < agentInfo.Position.Distance(closestShotgun.Location))
 				{
-					closestShotgun.Location = item->Location;
+					closestShotgun.Location = item.Location;
 				}
 			}
 		}
@@ -612,7 +613,7 @@ namespace BT_Actions
 	Elite::BehaviorState SeekClosestGun(Elite::Blackboard* pBlackboard)
 	{
 
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false || pMemory.empty())
 			return Elite::BehaviorState::Failure;
 
@@ -630,11 +631,11 @@ namespace BT_Actions
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::PISTOL || item->Type == eItemType::SHOTGUN)
+			if (item.Type == eItemType::PISTOL || item.Type == eItemType::SHOTGUN)
 			{
-				if (agentInfo.Position.Distance(item->Location) < agentInfo.Position.Distance(closestGun.Location))
+				if (agentInfo.Position.Distance(item.Location) < agentInfo.Position.Distance(closestGun.Location))
 				{
-					closestGun.Location = item->Location;
+					closestGun.Location = item.Location;
 				}
 			}
 		}
@@ -655,7 +656,7 @@ namespace BT_Actions
 		if (pBlackboard->GetData("ItemsInFOV", pItemsInFOV) == false || pItemsInFOV.empty())
 			return Elite::BehaviorState::Failure;
 
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (pBlackboard->GetData("ItemsInMemory", pMemory) == false)
 			return Elite::BehaviorState::Failure;
 
@@ -673,16 +674,21 @@ namespace BT_Actions
 				closestItem = item;
 			}
 		}
-		
+
+
 		for (auto item : pMemory)
 		{
-			if (item == &closestItem) //if item already in memory return
+
+			if (item.Location == closestItem.Location) //if item already in memory return
 				return Elite::BehaviorState::Success;
 		}
 
-		pMemory.push_back(&closestItem);
+
+
+		pMemory.push_back(closestItem);
 		pBlackboard->ChangeData("ItemsInMemory", pMemory);
 		return Elite::BehaviorState::Success;
+
 	}
 }
 
@@ -907,13 +913,13 @@ namespace BT_Conditions
 
 	bool RemembersFood(Elite::Blackboard* pBlackboard)
 	{
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::FOOD)
+			if (item.Type == eItemType::FOOD)
 				return true;
 		}
 		return false;
@@ -921,13 +927,13 @@ namespace BT_Conditions
 
 	bool RemembersGun(Elite::Blackboard* pBlackboard)
 	{
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::PISTOL || item->Type == eItemType::SHOTGUN)
+			if (item.Type == eItemType::PISTOL || item.Type == eItemType::SHOTGUN)
 				return true;
 		}
 		return false;
@@ -935,13 +941,13 @@ namespace BT_Conditions
 
 	bool RemembersMedKit(Elite::Blackboard* pBlackboard)
 	{
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::MEDKIT)
+			if (item.Type == eItemType::MEDKIT)
 				return true;
 		}
 		return false;
@@ -949,26 +955,26 @@ namespace BT_Conditions
 
 	bool RemembersPistol(Elite::Blackboard* pBlackboard)
 	{
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::PISTOL)
+			if (item.Type == eItemType::PISTOL)
 				return true;
 		}
 		return false;
 	}
 	bool RemembersShotGun(Elite::Blackboard* pBlackboard)
 	{
-		std::vector<ItemInfo*> pMemory;
+		std::vector<ItemInfo> pMemory;
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
 		for (auto item : pMemory)
 		{
-			if (item->Type == eItemType::SHOTGUN)
+			if (item.Type == eItemType::SHOTGUN)
 				return true;
 		}
 		return false;

@@ -27,7 +27,7 @@ void SurvivalAgentPlugin::Initialize(IBaseInterface* pInterface, PluginInfo& inf
 	m_pSteeringOutput = new SteeringPlugin_Output{};
 	m_pSteering = new Steering(m_pInterface, m_pSteeringOutput);
 
-	m_pItemsMemory.clear();
+	m_ItemsMemory.clear();
 	
 	InitializeBlackboard();
 
@@ -162,7 +162,7 @@ SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 
 	//update decisions and select highrst priority task
 	m_pBehaviorTree->Update(dt);
-
+	
 	//update steering
 	
 	m_pBlackboard->GetData("SteeringOutput", m_pSteeringOutput);
@@ -188,10 +188,11 @@ void SurvivalAgentPlugin::InitializeBlackboard()
 	m_pBlackboard->AddData("Interface", m_pInterface);
 	m_pBlackboard->AddData("Explorer", m_pExplorer);
 	
-	m_pBlackboard->AddData("ItemsInMemory", m_pItemsMemory); 
-	m_pBlackboard->AddData("HousesInMemory", m_pHousesMemory);
+	m_pBlackboard->AddData("ItemsInMemory", m_ItemsMemory); 
+	m_pBlackboard->AddData("HousesInMemory", m_HousesMemory);
 	
-	m_pBlackboard->AddData("SteeringOutput", m_pSteeringOutput);
+	
+	m_pBlackboard->AddData("SteeringOutput", m_pSteeringOutput); 
 	m_pBlackboard->AddData("Steering", m_pSteering);
 
 	m_pBlackboard->AddData("EnemiesInFOV", m_EnemiesInFov);

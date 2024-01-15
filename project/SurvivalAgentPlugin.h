@@ -46,11 +46,12 @@ private:
 	ItemManager* m_pItemManager {nullptr};
 	Elite::Blackboard* m_pBlackboard{nullptr};
 
-	std::vector<ItemInfo*> m_pItemsMemory{};
+	std::vector<ItemInfo> m_ItemsMemory{};
+	
 
 
 
-	std::vector<HouseSearch> m_pHousesMemory{};
+	std::vector<HouseSearch> m_HousesMemory{};
 	
 
 	SteeringPlugin_Output* m_pSteeringOutput{nullptr};
