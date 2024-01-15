@@ -9,7 +9,7 @@ Explorer::Explorer(IExamInterface* pInterface)
 	Elite::Vector2 worldCenter = pInterface->World_GetInfo().Center;
 
 	//number of divisions
-	m_GridDivisions = 50;
+	m_GridDivisions = 40;
 
 	//tile size
 	m_CellSize = m_WorldWidth/m_GridDivisions;
@@ -31,6 +31,7 @@ Explorer::Explorer(IExamInterface* pInterface)
 		cell.insideHouse = false;
 		m_Cells.emplace_back(cell);
 	}
+	DiscoverEdges();
 }
 
 void Explorer::DrawGrid() const
@@ -104,7 +105,7 @@ bool Explorer::IsPointInRect(const Elite::Vector2& topLeft, float width, float h
 	return point.x >= topLeft.x && point.x < topLeft.x + width && point.y >= topLeft.y && point.y < topLeft.y + height;
 }
 
-Elite::Vector2  Explorer::NextClosestCell()
+Elite::Vector2 Explorer::NextClosestCell()
 {
 	float closestDistance{ FLT_MAX };
 	Elite::Vector2 agentPosition = m_pInterface->Agent_GetInfo().Position;
@@ -125,4 +126,30 @@ Elite::Vector2  Explorer::NextClosestCell()
 
 	return target;
 	
+}
+
+bool Explorer::AllCellsVisited()
+{
+	for (size_t i{}; i < m_NumberOfCells; ++i)
+	{	
+		if(!m_Cells[i].visited);
+		return false;
+	}
+	return true;
+}
+
+void Explorer::DiscoverEdges()
+{
+	
+	// Set top and bottom edges to doscovered
+	for (int col = 0; col < m_GridDivisions; ++col) {
+		m_Cells[col].visited = true;                  // Top edge
+		m_Cells[(m_GridDivisions - 1) * m_GridDivisions + col].visited = true; // Bottom edge
+	}
+
+	// Set left and right edges to discovered
+	for (int row = 0; row < m_GridDivisions; ++row) {
+		m_Cells[row * m_GridDivisions].visited = true;            // Left edge
+		m_Cells[(row + 1) * m_GridDivisions - 1].visited = true;   // Right edge
+	}
 }

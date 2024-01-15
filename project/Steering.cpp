@@ -68,7 +68,7 @@ void Steering::SpinAround()
 {
 	auto agentInfo = m_pInterface->Agent_GetInfo();
 	m_pSteering->AutoOrient = false;
-	m_pSteering->AngularVelocity = agentInfo.MaxAngularSpeed/2.f;
+	m_pSteering->AngularVelocity = agentInfo.MaxAngularSpeed;
 }
 
 void Steering::Stop()

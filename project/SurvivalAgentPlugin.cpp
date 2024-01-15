@@ -63,14 +63,14 @@ void SurvivalAgentPlugin::InitGameDebugParams(GameDebugParams& params)
 {
 	params.AutoFollowCam = true; //Automatically follow the AI? (Default = true)
 	params.RenderUI = true; //Render the IMGUI Panel? (Default = true)
-	params.SpawnEnemies = false; //Do you want to spawn enemies? (Default = true)
+	params.SpawnEnemies = true; //Do you want to spawn enemies? (Default = true)
 	params.EnemyCount = 20; //How many enemies? (Default = 20)
-	params.GodMode = true; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
+	params.GodMode = false; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
 	params.AutoGrabClosestItem = true; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
 	params.StartingDifficultyStage = 1;
 	params.InfiniteStamina = false;
-	params.SpawnDebugPistol = true;
+	params.SpawnDebugPistol = false;
 	params.SpawnDebugShotgun = false;
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
@@ -156,7 +156,8 @@ SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 	
 	
 	m_pBlackboard->ChangeData("Interface", m_pInterface); //update interface
-	//m_pBlackboard->ChangeData("")
+	InsideTimer(dt);
+	DangerTimer(dt);
 
 	m_pExplorer->Update(); //update exploration grid
 
@@ -191,9 +192,11 @@ void SurvivalAgentPlugin::InitializeBlackboard()
 	m_pBlackboard->AddData("ItemsInMemory", m_ItemsMemory); 
 	m_pBlackboard->AddData("HousesInMemory", m_HousesMemory);
 	
-	
+	m_pBlackboard->AddData("WasInside", m_WasInside);
+	m_pBlackboard->AddData("InDanger", m_RecentlyInDanger);
+
 	m_pBlackboard->AddData("SteeringOutput", m_pSteeringOutput); 
-	m_pBlackboard->AddData("Steering", m_pSteering);
+	m_pBlackboard->AddData("Steering", m_pSteering); 
 
 	m_pBlackboard->AddData("EnemiesInFOV", m_EnemiesInFov);
 	m_pBlackboard->AddData("PurgeZonesInFOV", m_PurgeZonesInFov);
@@ -222,7 +225,7 @@ void SurvivalAgentPlugin::InitializeBT()
 					new Elite::BehaviorSequence //Enemies
 					(
 					{
-						new Elite::BehaviorConditional(&BT_Conditions::IsInDanger), //Enemy in FOV or was Bitten
+						//Enemy in FOV or was Bitten 
 						new Elite::BehaviorSelector
 						(
 							{
@@ -234,15 +237,21 @@ void SurvivalAgentPlugin::InitializeBT()
 										new Elite::BehaviorAction{ &BT_Actions::AimAndShoot }
 									}
 								),
-							
-							//hide in a house
-
-							//todo
+								new Elite::BehaviorSequence // Hide in a house
+								(
+									{
+										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun},
+										new Elite::BehaviorInvertConditional{ &BT_Conditions::WasInside},
+										new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
+										new Elite::BehaviorAction{ &BT_Actions::HideInHouse}
+									}
+								),
 								new Elite::BehaviorSequence //flee
 								(
 									{
 										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun },
-										new  Elite::BehaviorAction(&BT_Actions::FleeFromEnemy)
+										new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
+										new Elite::BehaviorAction(&BT_Actions::FleeFromEnemy)
 									}
 								),
 								
@@ -337,12 +346,34 @@ void SurvivalAgentPlugin::InitializeBT()
 								new Elite::BehaviorAction{&BT_Actions::RememberHouse}
 							}
 						),
-						//new Elite::BehaviorAction{&BT_Actions::SearchClosestHouseInMemory}
+											
 					}
 					),
-					//Explore if nothing else to do
 					new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
-					new Elite::BehaviorAction{ BT_Actions::Explore }
+					new Elite::BehaviorSelector //search houses in fov
+					(
+					{
+						new Elite::BehaviorSequence
+						(
+							{
+								//new Elite::BehaviorConditional{&BT_Conditions::CellsToExplore},
+								new Elite::BehaviorAction{ &BT_Actions::Explore}
+								
+							}
+						),
+
+					}
+					),
+					
+					new Elite::BehaviorAction{ &BT_Actions::RevisitHouses}
+					
+					//if dying (desperately needs something, revisit houses == maybe put it with behaviours above?
+
+					//Explore if nothing else to do
+					//if not all tiles explored
+					
+
+					
 				}
 			}
 		}
@@ -371,24 +402,66 @@ void SurvivalAgentPlugin::GetEntitiesInFov()
 
 void SurvivalAgentPlugin::UseResourcesIfNeeded()
 {
-	
+	ItemInfo item{};
 	if (m_pItemManager->HasItem(eItemType::MEDKIT))
 	{
-		if (m_pInterface->Agent_GetInfo().Health <= 7.f)
+		m_pInterface->Inventory_GetItem(m_pItemManager->GetSlotWithItem(eItemType::MEDKIT), item);
+
+		if (10.f - m_pInterface->Agent_GetInfo().Health >= item.Value)
 			m_pItemManager->UseMedKit();
 	}
 
 	if (m_pItemManager->HasItem(eItemType::FOOD))
 	{
-		ItemInfo item{};
+		
 		m_pInterface->Inventory_GetItem(m_pItemManager->GetSlotWithItem(eItemType::FOOD), item);
 		
 		if (10.f - m_pInterface->Agent_GetInfo().Energy >= item.Value )
 		m_pItemManager->UseFood();
 	}
 
-
-	//iprove this to add egaent max and check we are not taking when it is not needed
 }
 
 
+void SurvivalAgentPlugin::InsideTimer(float dt)
+{
+
+	if (m_pInterface->Agent_GetInfo().IsInHouse)
+	{
+		m_WasInside = true;
+		m_WasInsideTimer = 0.f;
+	}
+	else
+	{
+		m_WasInsideTimer += dt;
+		if (m_WasInsideTimer >= 10.f)
+		{
+
+			m_WasInside = false;
+		}
+	}
+	m_pBlackboard->ChangeData("WasInside", m_WasInside);
+
+}	
+
+void SurvivalAgentPlugin::DangerTimer(float dt)
+{
+	
+	
+	if (m_pInterface->GetEnemiesInFOV().size() > 0)
+	{
+		m_RecentlyInDanger = true;
+		m_DangerTimer = 0.f;
+	}
+	else
+	{
+		m_DangerTimer += dt;
+		if (m_DangerTimer >= 5.f)
+		{
+
+			m_RecentlyInDanger = false;
+		}
+	}
+	m_pBlackboard->ChangeData("InDanger", m_RecentlyInDanger);
+
+}

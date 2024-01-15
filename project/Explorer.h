@@ -18,6 +18,8 @@ public:
 	void Update();
 	int PositionToIdx(const Elite::Vector2& position) const;
 	Elite::Vector2 NextClosestCell();
+	bool AllCellsVisited();
+	void DiscoverEdges();
 
 private:
 

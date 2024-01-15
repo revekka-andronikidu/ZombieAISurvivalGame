@@ -49,7 +49,11 @@ private:
 	std::vector<ItemInfo> m_ItemsMemory{};
 	
 
+	bool m_WasInside{false};
+	float m_WasInsideTimer{ 0.f };
 
+	float m_DangerTimer{ 0.f };
+	bool m_RecentlyInDanger{false};
 
 	std::vector<HouseSearch> m_HousesMemory{};
 	
@@ -77,6 +81,8 @@ private:
 	void GetEntitiesInFov();
 	void UseResourcesIfNeeded();
 	
+	void InsideTimer(float dt);
+	void DangerTimer(float dt);
 };
 
 //ENTRY
