@@ -5,6 +5,7 @@
 #include "EBlackboard.h"
 #include "BehaviourTree/EBehaviorTree.h"
 #include "Explorer.h"
+#include "ExtendedStructs.h"
 
 class IBaseInterface;
 class IExamInterface;
@@ -46,21 +47,23 @@ private:
 	Elite::Blackboard* m_pBlackboard{nullptr};
 
 	std::vector<ItemInfo*> m_pItemsMemory{};
+
+
+
+	std::vector<HouseSearch> m_pHousesMemory{};
 	
 
-	//std::vector<HouseInfo*> m_pHousesMemory;
+	SteeringPlugin_Output* m_pSteeringOutput{nullptr};
+	Steering* m_pSteering{nullptr};
 
-	SteeringPlugin_Output* m_pSteeringOutput;
-	Steering* m_pSteering;
-
-	Explorer* m_pExplorer;
+	Explorer* m_pExplorer{nullptr};
 
 	std::vector<EnemyInfo> m_EnemiesInFov;
 	std::vector<PurgeZoneInfo> m_PurgeZonesInFov;
 	std::vector<HouseInfo> m_HousesInFov;
 	std::vector<ItemInfo> m_ItemsInFov;
 
-	Elite::BehaviorTree* m_pBehaviorTree;
+	Elite::BehaviorTree* m_pBehaviorTree{nullptr};
 
 
 

@@ -7,7 +7,7 @@ ItemManager::ItemManager(IExamInterface* pInterface)
 	m_Inventory.resize(m_pInterface->Inventory_GetCapacity());
 	m_Full = m_pInterface->Inventory_GetCapacity();
 
-	for (int idx{}; idx < m_Inventory.size(); idx++)
+	for (size_t idx{}; idx < m_Inventory.size(); idx++)
 	{	
 		m_Inventory[idx] = eItemType::RANDOM_DROP;
 	}
@@ -155,12 +155,8 @@ void ItemManager::UseFood()
 		m_pInterface->Inventory_UseItem(slot);
 		std::wcout << L"Nom Nom!\n";
 
-		if (itemInfo.Value <= 0.f)
-		{
-			m_pInterface->Inventory_RemoveItem(slot);
-			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
-			std::wcout << L"Food discarted from a slot, no food left!\n";
-		}
+		m_pInterface->Inventory_RemoveItem(slot);
+		m_Inventory.at(slot) = eItemType::RANDOM_DROP; //temp will be rewriten when new item is added
 	}
 
 }
@@ -195,4 +191,20 @@ bool ItemManager::HasItem(eItemType itemType) const
 
 	}
 	return false;
+}
+
+
+
+int ItemManager::HowManyIHave(eItemType itemType) const
+{
+	int count{ 0 };
+	for (eItemType item : m_Inventory)
+	{
+		if (item == itemType)
+		{
+			count++;
+		}
+
+	}
+	return count;
 }

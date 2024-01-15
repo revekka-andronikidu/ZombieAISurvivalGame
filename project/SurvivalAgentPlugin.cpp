@@ -62,7 +62,7 @@ void SurvivalAgentPlugin::InitGameDebugParams(GameDebugParams& params)
 {
 	params.AutoFollowCam = true; //Automatically follow the AI? (Default = true)
 	params.RenderUI = true; //Render the IMGUI Panel? (Default = true)
-	params.SpawnEnemies = true; //Do you want to spawn enemies? (Default = true)
+	params.SpawnEnemies = false; //Do you want to spawn enemies? (Default = true)
 	params.EnemyCount = 20; //How many enemies? (Default = 20)
 	params.GodMode = true; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
@@ -143,7 +143,7 @@ void SurvivalAgentPlugin::Update_Debug(float dt)
 	//	std::cout << (int)info.Type << std::endl;
 	//}
 
-	//m_pExplorer->DrawGrid();
+	m_pExplorer->DrawGrid();
 }
 
 //This function calculates the new SteeringOutput, called once per frame
@@ -157,8 +157,9 @@ SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 	m_pBlackboard->ChangeData("Interface", m_pInterface); //update interface
 	//m_pBlackboard->ChangeData("")
 
+	m_pExplorer->Update(); //update exploration grid
+
 	//update decisions and select highrst priority task
-	//m_pExplorer->Update();
 	m_pBehaviorTree->Update(dt);
 
 	//update steering
@@ -186,11 +187,8 @@ void SurvivalAgentPlugin::InitializeBlackboard()
 	m_pBlackboard->AddData("Interface", m_pInterface);
 	m_pBlackboard->AddData("Explorer", m_pExplorer);
 	
-	m_pBlackboard->AddData("ItemsInMemory", m_pItemsMemory);
-	
-
-	//m_pBlackboard->AddData("Houses", m_pHousesMemory);
-
+	m_pBlackboard->AddData("ItemsInMemory", m_pItemsMemory); 
+	m_pBlackboard->AddData("HousesInMemory", m_pHousesMemory);
 	
 	m_pBlackboard->AddData("SteeringOutput", m_pSteeringOutput);
 	m_pBlackboard->AddData("Steering", m_pSteering);
@@ -199,9 +197,6 @@ void SurvivalAgentPlugin::InitializeBlackboard()
 	m_pBlackboard->AddData("PurgeZonesInFOV", m_PurgeZonesInFov);
 	m_pBlackboard->AddData("HousesInFOV", m_HousesInFov);
 	m_pBlackboard->AddData("ItemsInFOV", m_ItemsInFov);
-
-	
-
 }
 
 void SurvivalAgentPlugin::InitializeBT()
@@ -237,6 +232,9 @@ void SurvivalAgentPlugin::InitializeBT()
 										new Elite::BehaviorAction{ &BT_Actions::AimAndShoot }
 									}
 								),
+							//if is a house and enemy in fov -- move to next tile or next house to prevent getting stuck
+							
+							//hide in a house
 								new Elite::BehaviorSequence //flee
 								(
 									{
@@ -326,7 +324,21 @@ void SurvivalAgentPlugin::InitializeBT()
 						
 					}
 					),
+					new Elite::BehaviorSelector //search houses in fov
+					(
+					{
+						new Elite::BehaviorSequence
+						(
+							{
+								new Elite::BehaviorConditional{&BT_Conditions::IsHouseInFOVNew},
+								new Elite::BehaviorAction{&BT_Actions::RememberHouse}
+							}
+						),
+						//new Elite::BehaviorAction{&BT_Actions::SearchClosestHouseInMemory}
+					}
+					),
 					//Explore if nothing else to do
+					new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
 					new Elite::BehaviorAction{ BT_Actions::Explore }
 				}
 			}
@@ -365,7 +377,10 @@ void SurvivalAgentPlugin::UseResourcesIfNeeded()
 
 	if (m_pItemManager->HasItem(eItemType::FOOD))
 	{
-		if (m_pInterface->Agent_GetInfo().Energy <= 2.f)
+		ItemInfo item{};
+		m_pInterface->Inventory_GetItem(m_pItemManager->GetSlotWithItem(eItemType::FOOD), item);
+		
+		if (10.f - m_pInterface->Agent_GetInfo().Energy >= item.Value )
 		m_pItemManager->UseFood();
 	}
 

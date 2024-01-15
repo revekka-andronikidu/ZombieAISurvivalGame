@@ -9,7 +9,7 @@ Explorer::Explorer(IExamInterface* pInterface)
 	Elite::Vector2 worldCenter = pInterface->World_GetInfo().Center;
 
 	//number of divisions
-	m_GridDivisions = 70;
+	m_GridDivisions = 50;
 
 	//tile size
 	m_CellSize = m_WorldWidth/m_GridDivisions;
@@ -23,7 +23,7 @@ Explorer::Explorer(IExamInterface* pInterface)
 
 
 	Cell cell;
-	for (int i{}; i < m_NumberOfCells; ++i)
+	for (size_t i{}; i < m_NumberOfCells; ++i)
 	{
 		cell.Center.x = topLeftCellCenter.x + (i % m_GridDivisions) * m_CellSize;
 		cell.Center.y = topLeftCellCenter.y + (i / m_GridDivisions) * m_CellSize;
@@ -40,7 +40,7 @@ void Explorer::DrawGrid() const
 	const Elite::Vector3 hasHosue{ 0.8f, 0.f, 0.0f };
 	Elite::Vector3 color{};
 	//for each cell
-	for (auto cell : m_Cells)
+	for (const auto& cell : m_Cells)
 	{
 		const std::vector<Elite::Vector2> rect
 		{
@@ -53,11 +53,15 @@ void Explorer::DrawGrid() const
 		if (cell.insideHouse)
 			color = hasHosue;
 		else if (cell.visited)
+		{
 			color = visitedColor;
+
+			m_pInterface->Draw_Polygon(rect.data(), static_cast<int>(rect.size()), color);
+		}
 		else
 			color = defaultColor;
 
-		m_pInterface->Draw_SolidPolygon(rect.data(), static_cast<int>(rect.size()), color);
+		//m_pInterface->Draw_Polygon(rect.data(), static_cast<int>(rect.size()), color);
 	}
 
 }
@@ -98,4 +102,27 @@ int Explorer::PositionToIdx(const Elite::Vector2& position) const
 bool Explorer::IsPointInRect(const Elite::Vector2& topLeft, float width, float height, const Elite::Vector2& point) const
 {
 	return point.x >= topLeft.x && point.x < topLeft.x + width && point.y >= topLeft.y && point.y < topLeft.y + height;
+}
+
+Elite::Vector2  Explorer::NextClosestCell()
+{
+	float closestDistance{ FLT_MAX };
+	Elite::Vector2 agentPosition = m_pInterface->Agent_GetInfo().Position;
+	Elite::Vector2 target{ 0.f, 0.f };
+
+	for (const auto& cell : m_Cells)
+	{
+		if (cell.visited)
+			continue;
+
+		auto distance = Elite::Distance(agentPosition, cell.Center);
+		if (distance < closestDistance)
+		{
+			target = cell.Center;
+			closestDistance = distance;
+		}
+	}
+
+	return target;
+	
 }

@@ -17,7 +17,7 @@ public:
 	void DrawGrid() const;
 	void Update();
 	int PositionToIdx(const Elite::Vector2& position) const;
-	bool IsPointInRect(const Elite::Vector2& topLeft, float width, float height, const Elite::Vector2& point) const;
+	Elite::Vector2 NextClosestCell();
 
 private:
 
@@ -36,5 +36,6 @@ private:
 	float m_CellSize{};
 	int m_GridDivisions{};
 	size_t m_NumberOfCells{};
+	bool IsPointInRect(const Elite::Vector2& topLeft, float width, float height, const Elite::Vector2& point) const;
 
 };

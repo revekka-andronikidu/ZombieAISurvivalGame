@@ -25,7 +25,8 @@ public:
 	void UsePistol();
 	void UseGun(); 
 	void UseFood();
-	
+	int HowManyIHave(eItemType itemType) const;
+		
 
 	void AddItem(ItemInfo itemInfo);
 	bool HasItem(eItemType itemType) const;

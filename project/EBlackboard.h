@@ -9,6 +9,7 @@
 //Includes
 #include <unordered_map>
 #include <string>
+#include "stdafx.h"
 
 namespace Elite
 {

@@ -18,5 +18,6 @@
     <ClInclude Include="BehaviourTree\Behaviours.h" />
     <ClInclude Include="Steering.h" />
     <ClInclude Include="Explorer.h" />
+    <ClInclude Include="ExtendedStructs.h" />
   </ItemGroup>
 </Project>

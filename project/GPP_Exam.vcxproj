@@ -142,7 +142,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;GPPExam2019_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc\;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\inc\;$(SolutionDir)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -186,6 +186,7 @@
     <ClInclude Include="BehaviourTree\EDecisionMaking.h" />
     <ClInclude Include="EBlackboard.h" />
     <ClInclude Include="Explorer.h" />
+    <ClInclude Include="ExtendedStructs.h" />
     <ClInclude Include="ItemManager.h" />
     <ClInclude Include="Steering.h" />
     <ClInclude Include="SurvivalAgentPlugin.h" />
