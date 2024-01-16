@@ -61,16 +61,16 @@ void SurvivalAgentPlugin::DllShutdown()
 //Called only once, during initialization. Only works in DEBUG Mode
 void SurvivalAgentPlugin::InitGameDebugParams(GameDebugParams& params)
 {
-	params.AutoFollowCam = true; //Automatically follow the AI? (Default = true)
+	params.AutoFollowCam = false; //Automatically follow the AI? (Default = true)
 	params.RenderUI = true; //Render the IMGUI Panel? (Default = true)
-	params.SpawnEnemies = true; //Do you want to spawn enemies? (Default = true)
-	params.EnemyCount = 20; //How many enemies? (Default = 20)
+	params.SpawnEnemies = false; //Do you want to spawn enemies? (Default = true)
+	params.EnemyCount = 40; //How many enemies? (Default = 20)
 	params.GodMode = true; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
 	params.AutoGrabClosestItem = true; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
 	params.StartingDifficultyStage = 1;
-	params.InfiniteStamina = false;
-	params.SpawnDebugPistol = false;
+	params.InfiniteStamina = true;
+	params.SpawnDebugPistol = true;
 	params.SpawnDebugShotgun = false;
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
@@ -250,7 +250,7 @@ void SurvivalAgentPlugin::InitializeBT()
 								(
 									{
 										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun },
-										//new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
+										new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
 										new Elite::BehaviorAction(&BT_Actions::FleeFromEnemy)
 									}
 								),
@@ -336,58 +336,23 @@ void SurvivalAgentPlugin::InitializeBT()
 						
 					}
 					),
-					//new Elite::BehaviorSelector //search houses in fov
-					//(
-					//{
-						new Elite::BehaviorSequence
-						(
-							{
-								new Elite::BehaviorConditional{&BT_Conditions::IsHouseInFOVNew},
-								new Elite::BehaviorAction{&BT_Actions::RememberHouse}
-							}
-						),
-											
-					//}
-					//),
-					//new Elite::BehaviorSelector //if dying (desperately needs something -> revisit house)
-					//(
-					//{
-						new Elite::BehaviorSequence
-						(
-							{
-								new Elite::BehaviorConditional{&BT_Conditions::Desperate},
-								new Elite::BehaviorAction{ &BT_Actions::RevisitHouses }
+					new Elite::BehaviorSequence
+					(
+						{
+							new Elite::BehaviorConditional{&BT_Conditions::IsHouseInFOVNew},
+							new Elite::BehaviorAction{&BT_Actions::RememberHouse}
+						}
+					),
+					new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
 
-							}
-						),
-					//}
-					//),
-					//new Elite::BehaviorSelector 
-					//(
-					//{
-						//new Elite::BehaviorSequence
-						//(
-							//{
-								new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
-							//}
-						//),
-						
-					//}
-					//),			
-					//new Elite::BehaviorSelector //search houses in fov
-					//(
-					//{
-						new Elite::BehaviorSequence
-						(
-							{
-								new Elite::BehaviorInvertConditional{&BT_Conditions::AllCellsExplored},
-								new Elite::BehaviorAction{ &BT_Actions::Explore}
-								
-							}
-						),
-					//}
-					//),
-					
+					new Elite::BehaviorSequence
+					(
+						{
+							new Elite::BehaviorInvertConditional{&BT_Conditions::AllCellsExplored},
+							new Elite::BehaviorAction{ &BT_Actions::Explore}
+						}
+					),
+				
 					new Elite::BehaviorAction{ &BT_Actions::RevisitHouses },
 					
 				}
@@ -472,7 +437,7 @@ void SurvivalAgentPlugin::InsideTimer(float dt)
 	else if (!m_pInterface->Agent_GetInfo().IsInHouse)
 	{
 		m_WasInsideTimer += dt;
-		if (m_WasInsideTimer >= 12.f)
+		if (m_WasInsideTimer >= 10.f)
 		{
 
 			m_WasInside = false;

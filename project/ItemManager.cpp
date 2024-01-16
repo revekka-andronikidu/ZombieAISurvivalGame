@@ -36,7 +36,7 @@ bool ItemManager::IsFull() const
 {
 	if (GetFreeSlot() == m_Full)
 	{
-		std::wcout << L"Inventory is full!\n";
+		//std::wcout << L"Inventory is full!\n";
 		return true;
 	}
 	else

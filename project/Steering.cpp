@@ -8,10 +8,10 @@ Steering::Steering(IExamInterface* pInterface, SteeringPlugin_Output* pSteering)
 {
 }
 
-void Steering::AutoOrient(bool state)
-{
-	m_pSteering->AutoOrient = state;
-}
+//void Steering::AutoOrient(bool state)
+//{
+//	m_pSteering->AutoOrient = state;
+//}
 
 void Steering::Seek(const Elite::Vector2& target)
 {
@@ -86,29 +86,29 @@ void Steering::Run(bool state)
 	
 }
 
-void Steering::Wander()
-{
-	auto agentInfo = m_pInterface->Agent_GetInfo();
-	const float m_Radius = 4.f;
-	const float m_OffsetDistance = 0.f;
-	const int m_MaxAngleChange = 180;
-	float m_WanderAngle = 360.f;
-
-	Elite::Vector2 currentPosition = agentInfo.Position;
-	Elite::Vector2 circleCenter{ currentPosition + agentInfo.LinearVelocity.GetNormalized() * m_OffsetDistance };
-
-	m_WanderAngle += Elite::ToRadians((rand() % m_MaxAngleChange) - (float(m_MaxAngleChange) / 2.f));
-
-
-	Elite::Vector2 targetPos = { std::cosf(m_WanderAngle), std::sinf(m_WanderAngle) };
-	targetPos *= m_Radius;
-	targetPos += circleCenter;
-
-
-	Seek(targetPos);
-	
-	//debug
-	Elite::Vector2 targetVector{ targetPos - agentInfo.Position };
-	m_pInterface->Draw_Circle(circleCenter, m_Radius, Elite::Vector3{ 0,1,0 });
-	m_pInterface->Draw_Direction(agentInfo.Position, targetVector, m_OffsetDistance, Elite::Vector3{ 0,1,0 });
-}
+//void Steering::Wander()
+//{
+//	auto agentInfo = m_pInterface->Agent_GetInfo();
+//	const float m_Radius = 4.f;
+//	const float m_OffsetDistance = 0.f;
+//	const int m_MaxAngleChange = 180;
+//	float m_WanderAngle = 360.f;
+//
+//	Elite::Vector2 currentPosition = agentInfo.Position;
+//	Elite::Vector2 circleCenter{ currentPosition + agentInfo.LinearVelocity.GetNormalized() * m_OffsetDistance };
+//
+//	m_WanderAngle += Elite::ToRadians((rand() % m_MaxAngleChange) - (float(m_MaxAngleChange) / 2.f));
+//
+//
+//	Elite::Vector2 targetPos = { std::cosf(m_WanderAngle), std::sinf(m_WanderAngle) };
+//	targetPos *= m_Radius;
+//	targetPos += circleCenter;
+//
+//
+//	Seek(targetPos);
+//	
+//	//debug
+//	Elite::Vector2 targetVector{ targetPos - agentInfo.Position };
+//	m_pInterface->Draw_Circle(circleCenter, m_Radius, Elite::Vector3{ 0,1,0 });
+//	m_pInterface->Draw_Direction(agentInfo.Position, targetVector, m_OffsetDistance, Elite::Vector3{ 0,1,0 });
+//}

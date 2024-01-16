@@ -41,5 +41,5 @@ private:
 	bool IsPointInRect(const Elite::Vector2& topLeft, float width, float height, const Elite::Vector2& point) const;
 	void DiscoverEdges();
 	bool AllCurrentCellsVisited();
-	std::vector<int> GetCellsInRadius(int cellIndex, int radius);
+	std::vector<int> GetCellsInRadius();
 };

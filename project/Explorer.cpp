@@ -18,6 +18,7 @@ Explorer::Explorer(IExamInterface* pInterface)
 	m_NumberOfCells  = m_GridDivisions * m_GridDivisions ;
 
 
+	
 	m_Cells.reserve(m_NumberOfCells);
 
 	const Elite::Vector2 topLeftCellCenter{ Elite::Vector2{worldCenter.x - m_WorldWidth / 2.f, worldCenter.y - m_WorldHeight / 2.f} - Elite::Vector2{m_CellSize / 2.f, m_CellSize / 2.f} };
@@ -32,15 +33,15 @@ Explorer::Explorer(IExamInterface* pInterface)
 		m_Cells.emplace_back(cell);
 	}
 
-	
+
 	m_Steps = 4;
-	m_CurrentRadius = m_GridDivisions / 2 / m_Steps;
+	m_CurrentRadius = m_GridDivisions  / m_Steps;
 	auto agentInfo = m_pInterface->Agent_GetInfo();
 	//m_StartIndex = PositionToIdx(agentInfo.Position + Elite::Vector2{ 0,m_CellSize });
-	m_StartIndex = PositionToIdx(pInterface->World_GetInfo().Center);
-	m_CurrentCellsIdx = GetCellsInRadius(m_StartIndex, m_CurrentRadius);
+//	m_StartIndex = PositionToIdx(pInterface->World_GetInfo().Center);
+	m_CurrentCellsIdx = GetCellsInRadius();
 
-	DiscoverEdges();
+	//DiscoverEdges();
 }
 
 void Explorer::DrawGrid() const
@@ -50,7 +51,8 @@ void Explorer::DrawGrid() const
 	const Elite::Vector3 hasHosue{ 0.8f, 0.f, 0.0f };
 	Elite::Vector3 color{};
 	//for each cell
-	/*for (const auto& cell : m_CurrentCellsIdx)
+
+	for (const auto& cell : m_CurrentCellsIdx)
 	{
 		const std::vector<Elite::Vector2> rect
 		{
@@ -65,13 +67,13 @@ void Explorer::DrawGrid() const
 		{
 			color = visitedColor;
 
-			m_pInterface->Draw_Polygon(rect.data(), static_cast<int>(rect.size()), color);
+			//m_pInterface->Draw_Polygon(rect.data(), static_cast<int>(rect.size()), color);
 		}
 		else
 			color = defaultColor;
 
 		m_pInterface->Draw_Polygon(rect.data(), static_cast<int>(rect.size()), color);
-	}*/
+	}
 
 	for (const auto& cell : m_Cells)
 	{
@@ -114,13 +116,16 @@ void Explorer::Update()
 		}
 	}
 
-	if (AllCurrentCellsVisited())
+	if (!AllCellsVisited())
 	{
-		m_CurrentStep++;
+		if (AllCurrentCellsVisited())
+		{
+			m_CurrentStep++;
 
-		m_CurrentRadius = (m_GridDivisions / 2 / m_Steps) * m_CurrentStep;
+			m_CurrentRadius = (m_GridDivisions / m_Steps) * m_CurrentStep;
 
-		m_CurrentCellsIdx = GetCellsInRadius(m_StartIndex, m_CurrentRadius);
+			m_CurrentCellsIdx = GetCellsInRadius();
+		}
 	}
 }
 
@@ -204,29 +209,42 @@ void Explorer::DiscoverEdges()
 		m_Cells[(row + 1) * m_GridDivisions - 1].visited = true;   // Right edge
 	}
 }
-std::vector<int> Explorer::GetCellsInRadius(int cellIndex, int radius)
+std::vector<int> Explorer::GetCellsInRadius()
 {
 	std::vector<int> result;
 
-	// Extract row and column from the 1D index
-	int row = cellIndex / m_GridDivisions;
-	int col = cellIndex % m_GridDivisions;
+	//// Extract row and column from the 1D index
+	//int row = cellIndex / m_GridDivisions;
+	//int col = cellIndex % m_GridDivisions;
 
-	// Loop within a 3x3 square centered at the given cell
-	for (int i = -radius; i <= radius; ++i) {
-		for (int j = -radius; j <= radius; ++j) {
-			int newRow = row + i;
-			int newCol = col + j;
+	//// Loop within a 3x3 square centered at the given cell
+	//for (int i = -radius; i <= radius; ++i) {
+	//	for (int j = -radius; j <= radius; ++j) {
+	//		int newRow = row + i;
+	//		int newCol = col + j;
 
-			// Check if the new coordinates are within the grid boundaries
-			if (newRow >= 0 && newRow < m_GridDivisions && newCol >= 0 && newCol < m_GridDivisions) {
-				// Convert 2D coordinates to 1D index
-				int newIndex = newRow * m_GridDivisions + newCol;
-				result.push_back(newIndex);
-			}
+	//		// Check if the new coordinates are within the grid boundaries
+	//		if (newRow >= 0 && newRow < m_GridDivisions && newCol >= 0 && newCol < m_GridDivisions) {
+	//			// Convert 2D coordinates to 1D index
+	//			int newIndex = newRow * m_GridDivisions + newCol;
+	//			result.push_back(newIndex);
+	//		}
+	//	}
+	//}
+
+	int startRow = (m_GridDivisions - m_CurrentRadius) / 2;
+	int startCol = (m_GridDivisions - m_CurrentRadius) / 2;
+	int startIndex = startRow * m_GridDivisions + startCol;
+
+	// Loop through the middle 4x4 square and add indices to the result vector
+	for (int i = 0; i < m_CurrentRadius; ++i) {
+		for (int j = 0; j < m_CurrentRadius; ++j)
+		{
+			result.push_back(startIndex + i * m_GridDivisions + j);
+
+			
 		}
 	}
-
 	return result;
 }
 	

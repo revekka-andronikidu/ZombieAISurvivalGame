@@ -48,14 +48,16 @@ namespace BT_Actions
 		
 		for (const auto& purgeZone : purgeZonesInFOV)
 		{		
-			Elite::Vector2 target = agentInfo.Position - purgeZone.Center;
+			Elite::Vector2 direction = agentInfo.Position - purgeZone.Center;
+			direction.Normalize();
+			Elite::Vector2 target = (purgeZone.Center + (purgeZone.Radius + safeMargin) * direction);
 			const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(target);
+			
 				pSteering->Seek(nextTargetPos);
 				pSteering->SpinAround();
 				
 				if (agentInfo.Stamina > 2.f)
 					pSteering->Run(true);
-
 				else if (agentInfo.Stamina <= 0.1f)
 					pSteering->Run(false);
 			
@@ -402,6 +404,8 @@ namespace BT_Actions
 		//pSteering->SpinAround();
 		pSteering->Face(closestEnemy.Location);
 
+		pBlackboard->ChangeData("InDanger", true);
+
 		return Elite::BehaviorState::Success;
 	}
 
@@ -444,7 +448,7 @@ namespace BT_Actions
 
 		pSteering->Seek(closestItem.Location);
 		pSteering->Face(closestItem.Location);
-		pSteering->AutoOrient(true);
+		//pSteering->AutoOrient(true);
 
 		if ((agentInfo.Position.Distance(closestItem.Location) < agentInfo.GrabRange ))
 		{
@@ -581,7 +585,7 @@ namespace BT_Actions
 		ItemInfo closestPistol{};
 		closestPistol.Location = { FLT_MAX ,FLT_MAX };
 
-		for (auto item : pMemory)
+		for (const auto& item : pMemory)
 		{
 			if (item.Type == eItemType::PISTOL)
 			{
@@ -844,7 +848,12 @@ namespace BT_Actions
 
 		else if (agentInfo.Stamina <= 0.1f)
 			pSteering->Run(false);
-	
+		pSteering->SpinAround();
+		
+
+		
+
+		pBlackboard->ChangeData("Steering", pSteering);
 		return Elite::BehaviorState::Running;
 	}
 		

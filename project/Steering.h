@@ -15,15 +15,14 @@ public:
 	Steering& operator=(Steering&& steering) = delete;
 
 
-	void AutoOrient(bool state);
+	
 	void Seek(const Elite::Vector2& target);
 	void Flee(const Elite::Vector2& target);
-	void Wander();
 	void SpinAround();
 	void Face(const Elite::Vector2& target);
 	void Run(bool state);
 	void Stop();
-	// StopMovement();
+
 private:
 	IExamInterface* m_pInterface = nullptr;
 	SteeringPlugin_Output* m_pSteering = nullptr;
