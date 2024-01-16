@@ -177,7 +177,7 @@ SteeringPlugin_Output SurvivalAgentPlugin::UpdateSteering(float dt)
 void SurvivalAgentPlugin::Render(float dt) const
 {
 	//This Render function should only contain calls to Interface->Draw_... functions
-	m_pInterface->Draw_SolidCircle(m_Target, .7f, { 0,0 }, { 1, 0, 0 });
+	//m_pInterface->Draw_SolidCircle(m_Target, .7f, { 0,0 }, { 1, 0, 0 });
 }
 
 
@@ -241,7 +241,7 @@ void SurvivalAgentPlugin::InitializeBT()
 								(
 									{
 										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun},
-										//new Elite::BehaviorInvertConditional{ &BT_Conditions::WasInside},
+										new Elite::BehaviorInvertConditional{ &BT_Conditions::WasInside},
 										new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
 										new Elite::BehaviorAction{ &BT_Actions::HideInHouse}
 									}
@@ -250,7 +250,7 @@ void SurvivalAgentPlugin::InitializeBT()
 								(
 									{
 										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun },
-										new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
+										//new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
 										new Elite::BehaviorAction(&BT_Actions::FleeFromEnemy)
 									}
 								),
@@ -336,9 +336,9 @@ void SurvivalAgentPlugin::InitializeBT()
 						
 					}
 					),
-					new Elite::BehaviorSelector //search houses in fov
-					(
-					{
+					//new Elite::BehaviorSelector //search houses in fov
+					//(
+					//{
 						new Elite::BehaviorSequence
 						(
 							{
@@ -347,24 +347,36 @@ void SurvivalAgentPlugin::InitializeBT()
 							}
 						),
 											
-					}
-					),
-					new Elite::BehaviorSelector 
-					(
-					{
+					//}
+					//),
+					//new Elite::BehaviorSelector //if dying (desperately needs something -> revisit house)
+					//(
+					//{
 						new Elite::BehaviorSequence
 						(
 							{
-								new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
+								new Elite::BehaviorConditional{&BT_Conditions::Desperate},
+								new Elite::BehaviorAction{ &BT_Actions::RevisitHouses }
+
 							}
 						),
+					//}
+					//),
+					//new Elite::BehaviorSelector 
+					//(
+					//{
+						//new Elite::BehaviorSequence
+						//(
+							//{
+								new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
+							//}
+						//),
 						
-					}
-					),
-					
-					new Elite::BehaviorSelector //search houses in fov
-					(
-					{
+					//}
+					//),			
+					//new Elite::BehaviorSelector //search houses in fov
+					//(
+					//{
 						new Elite::BehaviorSequence
 						(
 							{
@@ -373,10 +385,11 @@ void SurvivalAgentPlugin::InitializeBT()
 								
 							}
 						),
-					}
-					),
+					//}
+					//),
+					
 					new Elite::BehaviorAction{ &BT_Actions::RevisitHouses },
-					//if dying (desperately needs something, revisit houses == maybe put it with behaviours above?
+					
 				}
 			}
 		}
@@ -428,16 +441,38 @@ void SurvivalAgentPlugin::UseResourcesIfNeeded()
 
 void SurvivalAgentPlugin::InsideTimer(float dt)
 {
-
-	if (m_pInterface->Agent_GetInfo().IsInHouse)
+	auto agentInfo{ m_pInterface->Agent_GetInfo() };
+	
+	if (agentInfo.IsInHouse )
 	{
-		m_WasInside = true;
-		m_WasInsideTimer = 0.f;
+		HouseInfo closestHouse{};
+		closestHouse.Center = { FLT_MAX ,FLT_MAX };
+		for (const auto& house : m_pInterface->GetHousesInFOV())
+		{
+
+			if (agentInfo.Position.Distance(house.Center) < agentInfo.Position.Distance(closestHouse.Center))
+			{
+
+				closestHouse.Center = house.Center;
+			}
+
+		}
+		if (closestHouse.Center.x == FLT_MAX) //something went wrong
+			return;
+
+		const float margin{ 6.f };
+		if (closestHouse.Center.Distance(agentInfo.Position) < margin)
+		{
+			m_WasInside = true;
+			m_WasInsideTimer = 0.f;
+		}
+
+		
 	}
-	else
+	else if (!m_pInterface->Agent_GetInfo().IsInHouse)
 	{
 		m_WasInsideTimer += dt;
-		if (m_WasInsideTimer >= 10.f)
+		if (m_WasInsideTimer >= 12.f)
 		{
 
 			m_WasInside = false;

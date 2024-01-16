@@ -6,6 +6,7 @@ Explorer::Explorer(IExamInterface* pInterface)
 {
 	m_WorldWidth = pInterface->World_GetInfo().Dimensions.x;
 	m_WorldHeight = pInterface->World_GetInfo().Dimensions.y;
+	
 	Elite::Vector2 worldCenter = pInterface->World_GetInfo().Center;
 
 	//number of divisions
@@ -35,7 +36,8 @@ Explorer::Explorer(IExamInterface* pInterface)
 	m_Steps = 4;
 	m_CurrentRadius = m_GridDivisions / 2 / m_Steps;
 	auto agentInfo = m_pInterface->Agent_GetInfo();
-	m_StartIndex = PositionToIdx(agentInfo.Position + Elite::Vector2{ 0,m_CellSize });
+	//m_StartIndex = PositionToIdx(agentInfo.Position + Elite::Vector2{ 0,m_CellSize });
+	m_StartIndex = PositionToIdx(pInterface->World_GetInfo().Center);
 	m_CurrentCellsIdx = GetCellsInRadius(m_StartIndex, m_CurrentRadius);
 
 	DiscoverEdges();

@@ -652,6 +652,7 @@ namespace BT_Actions
 		if (!pBlackboard->GetData("Interface", pInterface))
 			return Elite::BehaviorState::Failure;
 		auto agentInfo = pInterface->Agent_GetInfo();
+	
 
 		ItemInfo closestGun{};
 		closestGun.Location = { FLT_MAX ,FLT_MAX };
@@ -681,6 +682,9 @@ namespace BT_Actions
 		if (pBlackboard->GetData("HousesInMemory", pHouseVector) == false || pHouseVector.empty())
 			return Elite::BehaviorState::Failure;
 
+		if (pHouseVector.size() < 8)
+			return Elite::BehaviorState::Failure;
+
 		for (size_t idx{}; idx < pHouseVector.size(); idx ++)
 		{
 			if (pHouseVector[idx].FinishedSearch)
@@ -688,15 +692,17 @@ namespace BT_Actions
 				const std::chrono::duration<float> time = std::chrono::steady_clock::now() - pHouseVector[idx].lastVisited;
 				auto durationFloat = std::chrono::duration_cast<std::chrono::duration<float>>(time);
 				float durationInSeconds = durationFloat.count();
-				if (durationInSeconds >= 210.0f)
+				if (durationInSeconds >= 240.0f)
 				{
 					pHouseVector[idx].FinishedSearch = false;
 					pHouseVector[idx].CurrentCorner = 0;
 					std::cout << "House to revisit added" << std::endl;
 					pBlackboard->ChangeData("HousesInMemory", pHouseVector);
+					return Elite::BehaviorState::Success;
 				}
 			}
 		}
+		return Elite::BehaviorState::Success;
 	}
 	Elite::BehaviorState GoOutside(Elite::Blackboard* pBlackboard)
 	{
@@ -826,6 +832,7 @@ namespace BT_Actions
 		if (closestHouse.Center.Distance(agentInfo.Position) < margin)	
 		{
 			return Elite::BehaviorState::Success;
+			
 		}
 
 		
@@ -1103,7 +1110,7 @@ namespace BT_Conditions
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
-		for (auto item : pMemory)
+		for (const auto& item : pMemory)
 		{
 			if (item.Type == eItemType::FOOD)
 				return true;
@@ -1117,7 +1124,7 @@ namespace BT_Conditions
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
-		for (auto item : pMemory)
+		for (const auto& item : pMemory)
 		{
 			if (item.Type == eItemType::PISTOL || item.Type == eItemType::SHOTGUN)
 				return true;
@@ -1131,7 +1138,7 @@ namespace BT_Conditions
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
-		for (auto item : pMemory)
+		for (const auto& item : pMemory)
 		{
 			if (item.Type == eItemType::MEDKIT)
 				return true;
@@ -1145,7 +1152,7 @@ namespace BT_Conditions
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
-		for (auto item : pMemory)
+		for (const auto& item : pMemory)
 		{
 			if (item.Type == eItemType::PISTOL)
 				return true;
@@ -1158,7 +1165,7 @@ namespace BT_Conditions
 		if (!pBlackboard->GetData("ItemsInMemory", pMemory) || pMemory.empty())
 			return false;
 
-		for (auto item : pMemory)
+		for (const auto& item : pMemory)
 		{
 			if (item.Type == eItemType::SHOTGUN)
 				return true;
@@ -1213,5 +1220,37 @@ namespace BT_Conditions
 		}
 		else
 			return false;
+	}
+
+	bool Desperate(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<ItemInfo> pMemory;
+		if (!pBlackboard->GetData("ItemsInMemory", pMemory))
+			return false;
+
+		ItemManager* pInventory;
+		if (!pBlackboard->GetData("Inventory", pInventory))
+			return false;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return false;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+
+		bool doesNotRemember{ true };
+		for (const auto& item : pMemory)
+		{
+			if (item.Type == eItemType::MEDKIT)
+				doesNotRemember = false;
+		}
+
+		if (agentInfo.Energy < 4 && !pInventory->HasItem(eItemType::FOOD))
+			return true;
+
+		if (agentInfo.Health < 4 && !pInventory->HasItem(eItemType::MEDKIT) && doesNotRemember)
+			return true;
+
+		return false;
 	}
 }
