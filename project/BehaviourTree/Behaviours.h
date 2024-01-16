@@ -395,7 +395,9 @@ namespace BT_Actions
 			pSteering->Run(false);
 
 
-		Elite::Vector2 target = (agentInfo.Position  - closestEnemy.Location) * 5.f  ;
+		Elite::Vector2 direction = (agentInfo.Position  - closestEnemy.Location)  ;
+		direction.Normalize();
+		Elite::Vector2 target = 5 * direction;
 		
 
 		const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(target);
@@ -686,27 +688,29 @@ namespace BT_Actions
 		if (pBlackboard->GetData("HousesInMemory", pHouseVector) == false || pHouseVector.empty())
 			return Elite::BehaviorState::Failure;
 
-		if (pHouseVector.size() < 8)
-			return Elite::BehaviorState::Failure;
-
-		for (size_t idx{}; idx < pHouseVector.size(); idx ++)
+		if (pHouseVector.size() > 8)
 		{
-			if (pHouseVector[idx].FinishedSearch)
+
+			for (size_t idx{}; idx < pHouseVector.size(); idx++)
 			{
-				const std::chrono::duration<float> time = std::chrono::steady_clock::now() - pHouseVector[idx].lastVisited;
-				auto durationFloat = std::chrono::duration_cast<std::chrono::duration<float>>(time);
-				float durationInSeconds = durationFloat.count();
-				if (durationInSeconds >= 240.0f)
+				if (pHouseVector[idx].FinishedSearch)
 				{
-					pHouseVector[idx].FinishedSearch = false;
-					pHouseVector[idx].CurrentCorner = 0;
-					std::cout << "House to revisit added" << std::endl;
-					pBlackboard->ChangeData("HousesInMemory", pHouseVector);
-					return Elite::BehaviorState::Success;
+					const std::chrono::duration<float> time = std::chrono::steady_clock::now() - pHouseVector[idx].lastVisited;
+					auto durationFloat = std::chrono::duration_cast<std::chrono::duration<float>>(time);
+					float durationInSeconds = durationFloat.count();
+					if (durationInSeconds >= 550.0f)
+					{
+						pHouseVector[idx].FinishedSearch = false;
+						pHouseVector[idx].CurrentCorner = 0;
+						std::cout << "House to revisit added" << std::endl;
+						pBlackboard->ChangeData("HousesInMemory", pHouseVector);
+						return Elite::BehaviorState::Success;
+					}
 				}
 			}
 		}
-		return Elite::BehaviorState::Success;
+		return Elite::BehaviorState::Failure;
+
 	}
 	Elite::BehaviorState GoOutside(Elite::Blackboard* pBlackboard)
 	{

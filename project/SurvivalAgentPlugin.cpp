@@ -15,7 +15,7 @@ void SurvivalAgentPlugin::Initialize(IBaseInterface* pInterface, PluginInfo& inf
 	m_pInterface = static_cast<IExamInterface*>(pInterface);
 
 	//Information for the leaderboards!
-	info.BotName = "MinionExam";
+	info.BotName = "XhunJunior";
 	info.Student_Name = "Revekka"; //No special characters allowed. Highscores won't work with special characters.
 	info.Student_Class = "2DAE09";
 	info.LB_Password = "Revekka!";//Don't use a real password! This is only to prevent other students from overwriting your highscore!
@@ -345,6 +345,8 @@ void SurvivalAgentPlugin::InitializeBT()
 					),
 					new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
 
+					new Elite::BehaviorAction{ &BT_Actions::RevisitHouses },
+
 					new Elite::BehaviorSequence
 					(
 						{
@@ -353,7 +355,7 @@ void SurvivalAgentPlugin::InitializeBT()
 						}
 					),
 				
-					new Elite::BehaviorAction{ &BT_Actions::RevisitHouses },
+					//new Elite::BehaviorAction{ &BT_Actions::RevisitHouses },
 					
 				}
 			}
