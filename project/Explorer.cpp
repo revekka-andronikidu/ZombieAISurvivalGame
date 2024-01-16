@@ -9,7 +9,7 @@ Explorer::Explorer(IExamInterface* pInterface)
 	Elite::Vector2 worldCenter = pInterface->World_GetInfo().Center;
 
 	//number of divisions
-	m_GridDivisions = 40;
+	m_GridDivisions = 16;
 
 	//tile size
 	m_CellSize = m_WorldWidth/m_GridDivisions;
@@ -28,9 +28,16 @@ Explorer::Explorer(IExamInterface* pInterface)
 		cell.Center.x = topLeftCellCenter.x + (i % m_GridDivisions) * m_CellSize;
 		cell.Center.y = topLeftCellCenter.y + (i / m_GridDivisions) * m_CellSize;
 		cell.visited = false;
-		cell.insideHouse = false;
 		m_Cells.emplace_back(cell);
 	}
+
+	
+	m_Steps = 4;
+	m_CurrentRadius = m_GridDivisions / 2 / m_Steps;
+	auto agentInfo = m_pInterface->Agent_GetInfo();
+	m_StartIndex = PositionToIdx(agentInfo.Position + Elite::Vector2{ 0,m_CellSize });
+	m_CurrentCellsIdx = GetCellsInRadius(m_StartIndex, m_CurrentRadius);
+
 	DiscoverEdges();
 }
 
@@ -41,19 +48,41 @@ void Explorer::DrawGrid() const
 	const Elite::Vector3 hasHosue{ 0.8f, 0.f, 0.0f };
 	Elite::Vector3 color{};
 	//for each cell
+	/*for (const auto& cell : m_CurrentCellsIdx)
+	{
+		const std::vector<Elite::Vector2> rect
+		{
+			{ m_Cells[cell].Center + Elite::Vector2{-m_CellSize / 2,m_CellSize / 2}},
+			{ m_Cells[cell].Center + Elite::Vector2{m_CellSize / 2,m_CellSize / 2} },
+			{ m_Cells[cell].Center + Elite::Vector2{m_CellSize / 2,-m_CellSize / 2} },
+			{ m_Cells[cell].Center + Elite::Vector2{-m_CellSize / 2,-m_CellSize / 2} },
+		};
+
+		
+		if (m_Cells[cell].visited)
+		{
+			color = visitedColor;
+
+			m_pInterface->Draw_Polygon(rect.data(), static_cast<int>(rect.size()), color);
+		}
+		else
+			color = defaultColor;
+
+		m_pInterface->Draw_Polygon(rect.data(), static_cast<int>(rect.size()), color);
+	}*/
+
 	for (const auto& cell : m_Cells)
 	{
 		const std::vector<Elite::Vector2> rect
 		{
-			{ cell.Center + Elite::Vector2{-m_CellSize / 2,m_CellSize / 2} },
+			{cell.Center + Elite::Vector2{-m_CellSize / 2,m_CellSize / 2}},
 			{ cell.Center + Elite::Vector2{m_CellSize / 2,m_CellSize / 2} },
 			{ cell.Center + Elite::Vector2{m_CellSize / 2,-m_CellSize / 2} },
-			{ cell.Center + Elite::Vector2{-m_CellSize / 2,-m_CellSize / 2} },
+			{cell.Center + Elite::Vector2{-m_CellSize / 2,-m_CellSize / 2} },
 		};
 
-		if (cell.insideHouse)
-			color = hasHosue;
-		else if (cell.visited)
+
+		if (cell.visited)
 		{
 			color = visitedColor;
 
@@ -81,6 +110,15 @@ void Explorer::Update()
 		{
 			m_Cells.at(idx).visited = true;
 		}
+	}
+
+	if (AllCurrentCellsVisited())
+	{
+		m_CurrentStep++;
+
+		m_CurrentRadius = (m_GridDivisions / 2 / m_Steps) * m_CurrentStep;
+
+		m_CurrentCellsIdx = GetCellsInRadius(m_StartIndex, m_CurrentRadius);
 	}
 }
 
@@ -111,15 +149,16 @@ Elite::Vector2 Explorer::NextClosestCell()
 	Elite::Vector2 agentPosition = m_pInterface->Agent_GetInfo().Position;
 	Elite::Vector2 target{ 0.f, 0.f };
 
-	for (const auto& cell : m_Cells)
+	
+	for (size_t idx{0}; idx < m_CurrentCellsIdx.size(); idx++)
 	{
-		if (cell.visited)
+		if (m_Cells[m_CurrentCellsIdx[idx]].visited)
 			continue;
 
-		auto distance = Elite::Distance(agentPosition, cell.Center);
+		auto distance = Elite::Distance(agentPosition, m_Cells[m_CurrentCellsIdx[idx]].Center);
 		if (distance < closestDistance)
 		{
-			target = cell.Center;
+			target = m_Cells[m_CurrentCellsIdx[idx]].Center;
 			closestDistance = distance;
 		}
 	}
@@ -132,7 +171,17 @@ bool Explorer::AllCellsVisited()
 {
 	for (size_t i{}; i < m_NumberOfCells; ++i)
 	{	
-		if(!m_Cells[i].visited);
+		if(!m_Cells[i].visited)
+		return false;
+	}
+	return true;
+}
+
+bool Explorer::AllCurrentCellsVisited()
+{
+	for (size_t i{}; i < m_CurrentCellsIdx.size(); ++i)
+	{
+		if (!m_Cells[m_CurrentCellsIdx[i]].visited)
 		return false;
 	}
 	return true;
@@ -153,3 +202,30 @@ void Explorer::DiscoverEdges()
 		m_Cells[(row + 1) * m_GridDivisions - 1].visited = true;   // Right edge
 	}
 }
+std::vector<int> Explorer::GetCellsInRadius(int cellIndex, int radius)
+{
+	std::vector<int> result;
+
+	// Extract row and column from the 1D index
+	int row = cellIndex / m_GridDivisions;
+	int col = cellIndex % m_GridDivisions;
+
+	// Loop within a 3x3 square centered at the given cell
+	for (int i = -radius; i <= radius; ++i) {
+		for (int j = -radius; j <= radius; ++j) {
+			int newRow = row + i;
+			int newCol = col + j;
+
+			// Check if the new coordinates are within the grid boundaries
+			if (newRow >= 0 && newRow < m_GridDivisions && newCol >= 0 && newCol < m_GridDivisions) {
+				// Convert 2D coordinates to 1D index
+				int newIndex = newRow * m_GridDivisions + newCol;
+				result.push_back(newIndex);
+			}
+		}
+	}
+
+	return result;
+}
+	
+

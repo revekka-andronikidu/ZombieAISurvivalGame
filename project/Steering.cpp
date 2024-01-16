@@ -61,14 +61,14 @@ void Steering::Face(const Elite::Vector2& target)
 	//debug
 	auto dir = agentInfo.Position - target;
 	auto dist = dir.Normalize();
-	m_pInterface->Draw_Direction(agentInfo.Position, dir, dist, Elite::Vector3{ 1.f,0,1.0f });
+	//m_pInterface->Draw_Direction(agentInfo.Position, dir, dist, Elite::Vector3{ 1.f,0,1.0f });
 }
 
 void Steering::SpinAround()
 {
 	auto agentInfo = m_pInterface->Agent_GetInfo();
 	m_pSteering->AutoOrient = false;
-	m_pSteering->AngularVelocity = agentInfo.MaxAngularSpeed;
+	m_pSteering->AngularVelocity = agentInfo.MaxAngularSpeed - agentInfo.MaxAngularSpeed/3.f;
 }
 
 void Steering::Stop()

@@ -65,7 +65,7 @@ void SurvivalAgentPlugin::InitGameDebugParams(GameDebugParams& params)
 	params.RenderUI = true; //Render the IMGUI Panel? (Default = true)
 	params.SpawnEnemies = true; //Do you want to spawn enemies? (Default = true)
 	params.EnemyCount = 20; //How many enemies? (Default = 20)
-	params.GodMode = false; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
+	params.GodMode = true; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
 	params.LevelFile = "GameLevel.gppl";
 	params.AutoGrabClosestItem = true; //A call to Item_Grab(...) returns the closest item that can be grabbed. (EntityInfo argument is ignored)
 	params.StartingDifficultyStage = 1;
@@ -241,7 +241,7 @@ void SurvivalAgentPlugin::InitializeBT()
 								(
 									{
 										new Elite::BehaviorInvertConditional{ &BT_Conditions::HasAGun},
-										new Elite::BehaviorInvertConditional{ &BT_Conditions::WasInside},
+										//new Elite::BehaviorInvertConditional{ &BT_Conditions::WasInside},
 										new Elite::BehaviorConditional(&BT_Conditions::IsInDanger),
 										new Elite::BehaviorAction{ &BT_Actions::HideInHouse}
 									}
@@ -349,31 +349,34 @@ void SurvivalAgentPlugin::InitializeBT()
 											
 					}
 					),
-					new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
+					new Elite::BehaviorSelector 
+					(
+					{
+						new Elite::BehaviorSequence
+						(
+							{
+								new Elite::BehaviorAction{ &BT_Actions::SearchClosestHouseInMemory },
+							}
+						),
+						
+					}
+					),
+					
 					new Elite::BehaviorSelector //search houses in fov
 					(
 					{
 						new Elite::BehaviorSequence
 						(
 							{
-								//new Elite::BehaviorConditional{&BT_Conditions::CellsToExplore},
+								new Elite::BehaviorInvertConditional{&BT_Conditions::AllCellsExplored},
 								new Elite::BehaviorAction{ &BT_Actions::Explore}
 								
 							}
 						),
-
 					}
 					),
-					
-					new Elite::BehaviorAction{ &BT_Actions::RevisitHouses}
-					
+					new Elite::BehaviorAction{ &BT_Actions::RevisitHouses },
 					//if dying (desperately needs something, revisit houses == maybe put it with behaviours above?
-
-					//Explore if nothing else to do
-					//if not all tiles explored
-					
-
-					
 				}
 			}
 		}

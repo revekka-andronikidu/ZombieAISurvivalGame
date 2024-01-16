@@ -170,10 +170,14 @@ namespace BT_Actions
 		const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(target);
 	
 		pSteering->Seek(nextTargetPos);
-		pSteering->Run(false);	
+		if (agentInfo.Stamina > 8.f)
+			pSteering->Run(true);
+
+		else if (agentInfo.Stamina <= 4.f)
+			pSteering->Run(false);
 		pSteering->SpinAround();
 		
-	
+		
 		return Elite::BehaviorState::Success;
 	}
 
@@ -263,6 +267,7 @@ namespace BT_Actions
 		if(closestHouse.Center.x == FLT_MAX) //no house left to search
 			return Elite::BehaviorState::Failure;
 
+		
 
 		Elite::Vector2 target{};	
 		switch (closestHouse.CurrentCorner)
@@ -323,8 +328,9 @@ namespace BT_Actions
 		}
 		}
 
+
 		const float margin{ 4.f };
-		if (target.Distance(agentInfo.Position) < margin)	// Just entered the house
+		if (target.Distance(agentInfo.Position) < margin)	
 		{
 			closestHouse.CurrentCorner++;
 		}
@@ -341,7 +347,11 @@ namespace BT_Actions
 		pBlackboard->ChangeData("HousesInMemory", pHousesMemory);
 		const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(target);
 		pSteering->Seek(nextTargetPos);
-		pSteering->Run(false);
+		if (agentInfo.Stamina > 8.f)
+			pSteering->Run(true);
+		else if (agentInfo.Stamina <= 4.f)
+			pSteering->Run(false);
+
 		if(closestHouse.CurrentCorner != 0)
 		pSteering->Face(nextTargetPos);
 		return Elite::BehaviorState::Success;
@@ -501,6 +511,10 @@ namespace BT_Actions
 
 		const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(closestFood.Location);
 		pSteering->Seek(nextTargetPos);
+		if (agentInfo.Stamina > 8.f)
+			pSteering->Run(true);
+		else if (agentInfo.Stamina <= 4.f)
+			pSteering->Run(false);
 		pSteering->SpinAround();
 		return Elite::BehaviorState::Success;
 	}
@@ -539,6 +553,11 @@ namespace BT_Actions
 
 		const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(closestMedkit.Location);
 		pSteering->Seek(nextTargetPos);
+		if (agentInfo.Stamina > 8.f)
+			pSteering->Run(true);
+
+		else if (agentInfo.Stamina <= 4.f)
+			pSteering->Run(false);
 		pSteering->SpinAround();
 		return Elite::BehaviorState::Success;
 	}
@@ -662,21 +681,73 @@ namespace BT_Actions
 		if (pBlackboard->GetData("HousesInMemory", pHouseVector) == false || pHouseVector.empty())
 			return Elite::BehaviorState::Failure;
 
-		for (auto house : pHouseVector)
+		for (size_t idx{}; idx < pHouseVector.size(); idx ++)
 		{
-			if (house.FinishedSearch)
+			if (pHouseVector[idx].FinishedSearch)
 			{
-				const std::chrono::duration<float> time = std::chrono::steady_clock::now() - house.lastVisited;
+				const std::chrono::duration<float> time = std::chrono::steady_clock::now() - pHouseVector[idx].lastVisited;
 				auto durationFloat = std::chrono::duration_cast<std::chrono::duration<float>>(time);
 				float durationInSeconds = durationFloat.count();
-				if (durationInSeconds >= 30.0f)
+				if (durationInSeconds >= 210.0f)
 				{
-					house.FinishedSearch = false;
-					house.CurrentCorner = 0;
+					pHouseVector[idx].FinishedSearch = false;
+					pHouseVector[idx].CurrentCorner = 0;
 					std::cout << "House to revisit added" << std::endl;
+					pBlackboard->ChangeData("HousesInMemory", pHouseVector);
 				}
 			}
 		}
+	}
+	Elite::BehaviorState GoOutside(Elite::Blackboard* pBlackboard)
+	{
+		Steering* pSteering{ nullptr };
+		if (!pBlackboard->GetData("Steering", pSteering))
+			return Elite::BehaviorState::Failure;
+
+		std::vector<HouseSearch> pHouseVector;
+		if (pBlackboard->GetData("HousesInMemory", pHouseVector) == false || pHouseVector.empty())
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return Elite::BehaviorState::Failure;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+		if(!agentInfo.IsInHouse)
+			return Elite::BehaviorState::Success;
+
+
+		HouseSearch closestHouse{};
+		closestHouse.Center = { FLT_MAX ,FLT_MAX };
+		for (const auto& house : pHouseVector)
+		{
+
+			if (agentInfo.Position.Distance(house.Center) < agentInfo.Position.Distance(closestHouse.Center))
+			{
+				if (!house.FinishedSearch)
+					closestHouse = house;
+			}
+
+		}
+		if (closestHouse.Center.x == FLT_MAX) //no house left to search
+			return Elite::BehaviorState::Failure;
+
+		Elite::Vector2 target{}; //outside corner
+		target =
+		{
+			closestHouse.Center.x - closestHouse.Size.x / 2.0f,
+			closestHouse.Center.y - closestHouse.Size.y / 2.0f
+		};
+
+		const float margin{ 4.f };
+		if (target.Distance(agentInfo.Position) < margin)
+		{
+			return Elite::BehaviorState::Success;
+		}
+
+		const Elite::Vector2 nextTargetPos = pInterface->NavMesh_GetClosestPathPoint(target);
+		pSteering->Seek(nextTargetPos);
+		return Elite::BehaviorState::Running;
 	}
 
 	Elite::BehaviorState RememberItem(Elite::Blackboard* pBlackboard)
@@ -931,12 +1002,23 @@ namespace BT_Conditions
 		bool need{true};
 			if (pInventory->HasItem(closestItem.Type))
 				need = false;
+			//take extra food
+			if (closestItem.Type == eItemType::FOOD && !pInventory->IsFull())
+			{
+				if (pInventory->HowManyIHave(eItemType::FOOD) < 2 )
+					need = true;
+			}
+			if (closestItem.Type == eItemType::MEDKIT && !pInventory->IsFull())
+			{
+				if (pInventory->HowManyIHave(eItemType::MEDKIT) < 2)
+					need = true;
+			}
 			//take a extra gun
-			if (closestItem.Type == eItemType::PISTOL || closestItem.Type == eItemType::SHOTGUN)
+			/*if (closestItem.Type == eItemType::PISTOL || closestItem.Type == eItemType::SHOTGUN && !pInventory->IsFull())
 			{
 				if (pInventory->HowManyIHave(eItemType::PISTOL) < 2 && pInventory->HowManyIHave(eItemType::SHOTGUN) < 2)
 					need = true;
-			}
+			}*/
 			
 	
 		return need;
@@ -1083,6 +1165,32 @@ namespace BT_Conditions
 		}
 		return false;
 	}
+	bool HouseCheckDone(Elite::Blackboard* pBlackboard)
+	{
+		std::vector<HouseSearch> pHousesMemory;
+		if (pBlackboard->GetData("HousesInMemory", pHousesMemory) == false)
+			return false;
+
+		IExamInterface* pInterface{ nullptr };
+		if (!pBlackboard->GetData("Interface", pInterface))
+			return false;
+		auto agentInfo = pInterface->Agent_GetInfo();
+
+	
+		HouseSearch closestHouse{};
+		closestHouse.Center = { FLT_MAX ,FLT_MAX };
+		for (const auto& house : pHousesMemory)
+		{
+
+			if (agentInfo.Position.Distance(house.Center) < agentInfo.Position.Distance(closestHouse.Center))
+			{
+				
+					closestHouse = house;
+			}
+
+		}
+		return closestHouse.FinishedSearch;
+	}
 
 	bool WasInside(Elite::Blackboard* pBlackboard)
 	{
@@ -1091,5 +1199,19 @@ namespace BT_Conditions
 			return false;
 
 		return wasInside;
+	}
+	bool AllCellsExplored(Elite::Blackboard* pBlackboard)
+	{
+		Explorer* pExplorer{ nullptr };
+		if (!pBlackboard->GetData("Explorer", pExplorer))
+			return false;
+
+		if (pExplorer->AllCellsVisited())
+		{
+			std::cout << "You explored the world! " << std::endl;
+			return true;
+		}
+		else
+			return false;
 	}
 }

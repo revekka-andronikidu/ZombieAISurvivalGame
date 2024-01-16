@@ -8,3 +8,10 @@ struct HouseSearch : public HouseInfo
 	bool FinishedSearch{false};
 	std::chrono::time_point<std::chrono::steady_clock> lastVisited;
 };
+
+struct Cell
+{
+	Elite::Vector2 Center{};
+	bool visited{ false };
+
+};

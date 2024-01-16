@@ -132,7 +132,7 @@ void ItemManager::UseGun() //in agent use a gun after aiming to the target
 		m_pInterface->Inventory_UseItem(slot);
 		//std::wcout << L"Pew Pew!\n";
 
-		if (itemInfo.Value <= 0.f)
+		if (itemInfo.Value < 1)
 		{
 			m_pInterface->Inventory_RemoveItem(slot);
 			m_Inventory.at(slot) = eItemType::RANDOM_DROP;
