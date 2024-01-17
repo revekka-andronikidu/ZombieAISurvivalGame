@@ -5,7 +5,7 @@ Welcome to the Zombie Survival AI Agent project! In this repository, you'll find
 
 The agent has limited information about its surroundings. It has a rough knowledge about the world in general and the entities within its line of sight. The goal of the agent is to survive for as long as possible, aiming for a high score. o achieve this, the agent needs to actively gather and use helpful items scattered throughout the world and use them to handle the threat of the roaming enemy zombies.
 
-https://github.com/Howest-DAE-GD/gpp-zombiesurvivalgame-revekka-andronikidu/assets/133512944/8cf84ef9-da83-4fda-af83-df05d5db92c6
+https://github.com/Howest-DAE-GD/gpp-zombiesurvivalgame-revekka-andronikidu/assets/133512944/85d658e4-c1cb-49b1-8d7a-161097b80a2d
 
 _Sped up (2x) version of gameplay_
 
@@ -22,7 +22,11 @@ Furthermore, behavior trees excel in handling priorities and decision sequences,
 ###Exploration
 
 
-https://github.com/Howest-DAE-GD/gpp-zombiesurvivalgame-revekka-andronikidu/assets/133512944/fdf8c7ad-7cb3-42bf-976a-0647d3cd9fcd
+
+
+https://github.com/Howest-DAE-GD/gpp-zombiesurvivalgame-revekka-andronikidu/assets/133512944/93deec9c-eac7-4c13-87f3-248074e925a7
+
+
 
 
 ## Conclusion
