@@ -5,7 +5,7 @@ Welcome to the Zombie Survival AI Agent project! In this repository, you'll find
 
 The agent has limited information about its surroundings. It has a rough knowledge about the world in general and the entities within its line of sight. The goal of the agent is to survive for as long as possible, aiming for a high score. o achieve this, the agent needs to actively gather and use helpful items scattered throughout the world and use them to handle the threat of the roaming enemy zombies.
 
-//insert a gameplay video
+https://github.com/Howest-DAE-GD/gpp-zombiesurvivalgame-revekka-andronikidu/assets/133512944/8cf84ef9-da83-4fda-af83-df05d5db92c6
 
 ## Implementation
 I chose behavior tree for my decision making in the AI Zombie survival game because of its versatility and ease of implementation. Behavior trees provide a hierarchical structure that allows me to break down complex decision-making processes into manageable and modular components. In the context of a zombie survival game, where the agent needs to navigate a dynamic and unpredictable environment, behavior trees offer a clear and intuitive way to represent the logic behind the AI's actions.
