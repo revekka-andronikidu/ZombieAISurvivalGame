@@ -29,8 +29,11 @@ _Showcase of world exploration in debug mode with no enemies_
 
 
 ## Conclusion
-In conclusion, the Zombie Survival Game project demonstrates the successful implementation of AI Agent, the agent's ability to navigate, survive, and strategically handle encounters with zombies with behavior tree as the backbone of the decision-making proces. 
+The Zombie Survival Game project demonstrates the successful implementation of AI Agent, the agent's ability to navigate, survive, and strategically handle encounters with zombies with behavior tree as the backbone of the decision-making proces. The strategic choices made in both decision-making and world exploration methodologies significantly contribute to the overall effectiveness of the AI agent.
 
+The hierarchical structure of behavior tree not only breaks down the complex decision-making into manageable components but also provided a clear and intuitive representation of the AI's logic in navigating the dynamic and unpredictable zombie-infested environment. The system's proficiency in handling priorities and decision sequences ensures that the AI makes informed choices based on real-time game states. Ultimately, the implementation of behavior trees aligns perfectly with the demands of scalability, adaptability, and efficiency required in the challenging context of a zombie survival game.
+
+Simultaneously, the approach taken in world exploration demonstrates a systematic and organized strategy. By dividing the environment into small cells, the exploration process efficiently emanates from the central point of the world. The iterative expansion of the exploration radius allows the agent to methodically uncover the entire world. This systematic method optimizes the agent's navigation, ensuring comprehensive coverage of the environment in a strategic and organized manner.
 
 
 
